@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+
+<html lang="en-us">
+
+<head>
+  <meta charset=UTF-8>
+  <meta content="width=device-width" name="viewport">
+  <title>Tracking Specification Maintenance</title>
+  <link rel="stylesheet" href="https://www.w3.org/2023/Talks/TPAC/Templates/slides.css">
+  <!-- To use the b6+ framework, include this: -->
+  <script src="https://www.w3.org/2023/Talks/TPAC/Templates/b6plus.js"></script>
+  <!-- To use the Shower framework, remove b6plus above and add these two: -->
+  <!--   <script src="https://www.w3.org/2023/Talks/TPAC/Templates/shower.js"></script>         -->
+  <!--   <script src="https://www.w3.org/2023/Talks/TPAC/Templates/iframe-fixup.js"></script>   -->
+</head>
+
+<body class="shower duration=15">
+
+  <!--=============================================================
+			    Example slides
+  ==============================================================-->
+
+  <!-- Remove this element if you don't want a progress bar: -->
+  <div class=progress></div>
+
+  <!-- Remove this element if you don't want the remaining time in
+       index mode and on the 2nd screen. If you keep it, you may want
+       to add the class "duration=n" on BODY, where n is the initial
+       number of minutes on the clock. Default is 30. -->
+  <div class=clock></div>
+
+  <!-- Alternative: Show also real time and elapsed time. -->
+  <!-- <div class=fullclock></div> -->
+
+  <section class="slide cover clear">
+    <h1>Tracking Specification Maintenance</h1>
+    <address>Jeffrey Yasskin</address>
+    <p>★ W3C TPAC 2023, Seville, 11–15 September ★</p>
+  </section>
+
+  <section class="slide">
+    <h2>The problem</h2>
+    <ul>
+      <li>411 W3C and WHATWG specs in browser-specs</li>
+      <li>Editors change roles, and stop spending time on old specs.</li>
+      <li>Sometimes that's ok, if the feature is stable.</li>
+      <li>If important issues come up, we don't always notice.</li>
+      <li>Even if we notice, organizations have to reallocate people to respond.</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h2>Existing tools</h2>
+    <dl>
+      <dt>Philip Jägenstedt's <a href="https://foolip.github.io/spec-reactions/">Spec Reactions</a></dt>
+      <dd>Aimed at prioritizing features.</dd>
+      <dt><a href="https://w3c.github.io/issue-metadata.html">Recommended Github labels</a></dt>
+      <dd>Distinguishes <em>bug</em> vs <em>enhancement</em>, but doesn't include priorities.</dd>
+    </dl>
+  </section>
+
+  <section class="slide cover">
+    <h2>What do we need?</h2>
+  </section>
+
+  <section class="slide">
+    <h2>Service Level Objectives</h2>
+    <h3>Define when an issue isn't being addressed fast enough.</h3>
+    <ul>
+      <li>Bugs and enhancements will have different SLOs.</li>
+      <li>Some bugs are low priority and can just stay open.
+        <ul>
+          <li>But everything should be triaged.</li>
+        </ul>
+      </li>
+      <li>Distinguish bugs endorsed by implementers vs developers?</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h2>Reporting</h2>
+    <ul>
+      <li>Find specs that are behaving worse than average.</li>
+    </ul>
+    <div class="columns">
+      <div>
+        <ul>
+          <li>Automate integration with browser prioritization.</li>
+          <li>Pretty charts motivate management.</li>
+        </ul>
+      </div>
+      <div>
+        <ul>
+          <li>Help bystanders notice problems.</li>
+          <li>Maybe one will volunteer.</li>
+          <li>Show who to contact.</li>
+          <li>If an editor's not responsive, talk to a team.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide final">
+    <h2>Discussion</h2>
+    <ul>
+      <li>What did I miss?
+        <ul><li>How can this be less Chrome-specific?</li></ul>
+      </li>
+      <li>Who can help?</li>
+      <li>Flesh some of this out.</li>
+    </ul>
+  </section>
+</body>
+
+</html>
