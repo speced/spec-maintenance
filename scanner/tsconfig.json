@@ -1,0 +1,12 @@
+{
+    "extends": "@tsconfig/node20/tsconfig.json",
+    "esm": true,
+    "compilerOptions": {
+        "outDir": "build",
+        "module": "nodenext",
+        "moduleResolution": "NodeNext",
+        "allowJs": true,
+        "resolveJsonModule": true,
+        "noImplicitAny": false
+    }
+}
