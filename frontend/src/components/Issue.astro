@@ -1,0 +1,12 @@
+---
+import { Temporal } from '@js-temporal/polyfill';
+import { formatRoundAge } from '@lib/formatRoundAge';
+import type { IssueSummary } from '@lib/repo-summaries';
+
+interface Props {
+    issue: IssueSummary;
+}
+const {issue} = Astro.props;
+const age = issue.created_at.until(Temporal.Now.instant());
+---
+<div><span><a href={issue.url}>{issue.title}</a></span><span>{formatRoundAge(age)}</span></div>

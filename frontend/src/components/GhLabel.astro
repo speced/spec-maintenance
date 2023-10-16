@@ -1,0 +1,8 @@
+---
+interface Props {
+  color: string;
+}
+const { color } = Astro.props;
+---
+
+<span class="label" data-color={color}></span>

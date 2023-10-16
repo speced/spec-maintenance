@@ -1,0 +1,21 @@
+---
+import { formatRoundAge } from "@lib/formatRoundAge";
+import type { AgeStats } from "@lib/repo-summaries";
+
+interface Props {
+    ageStats: AgeStats;
+    description: string;
+}
+const { ageStats, description } = Astro.props;
+
+const percentiles = [10, 25, 50, 75, 90];
+---
+
+<div class="bugStats">
+    <p>{ageStats.count}{' '}{description}: mean age {formatRoundAge(ageStats.mean)}</p>
+    <table>
+        <tr>{percentiles.map((p) => <th><span class="ord">{p}th</span> %ile</th>)}</tr>
+        <tr>{percentiles.map((p) => <td>{formatRoundAge(ageStats[p])}</td>)}</tr
+        >
+    </table>
+</div>

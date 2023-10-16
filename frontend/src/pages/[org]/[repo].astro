@@ -1,0 +1,60 @@
+---
+import Issue from "@components/Issue.astro";
+import Layout from "@layouts/Layout.astro";
+import { IssueSummary, RepoSummary } from "@lib/repo-summaries";
+import {
+PRIORITY_EVENTUALLY,
+PRIORITY_IMPORTANT,
+PRIORITY_URGENT,
+} from "@lib/triage";
+import type {
+GetStaticPaths,
+InferGetStaticParamsType,
+InferGetStaticPropsType,
+} from "astro";
+
+export const getStaticPaths = (async () => {
+    const repos = RepoSummary.array().parse(
+        await Astro.glob("../../../../scanner/summaries/*/*.json")
+    );
+    return repos.map((repo) => ({
+        params: { org: repo.org, repo: repo.repo },
+        props: { details: repo },
+    }));
+}) satisfies GetStaticPaths;
+
+type Params = InferGetStaticParamsType<typeof getStaticPaths>;
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { org, repo } = Astro.params as Params;
+const { details } = Astro.props as Props;
+
+const untriaged: IssueSummary[] = [];
+const urgent: IssueSummary[] = [];
+const important: IssueSummary[] = [];
+for (const issue of details.issues) {
+    if (issue.closed_at) {
+        // Only list open issues.
+        continue;
+    }
+    if (issue.labels.includes(PRIORITY_URGENT)) {
+        urgent.push(issue);
+    } else if (issue.labels.includes(PRIORITY_IMPORTANT)) {
+        important.push(issue);
+    } else if (!issue.labels.includes(PRIORITY_EVENTUALLY)) {
+        untriaged.push(issue);
+    }
+}
+---
+
+<Layout title={`${org}/${repo} Issues`}>
+    <h1>{org}/{repo} Issues</h1>
+    <h2>Untriaged</h2>
+    {untriaged.map((issue) => <Issue {issue} />)}
+
+    <h2>Urgent</h2>
+    {urgent.map((issue) => <Issue {issue} />)}
+
+    <h2>Important</h2>
+    {important.map((issue) => <Issue {issue} />)}
+</Layout>
