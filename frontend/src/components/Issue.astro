@@ -9,4 +9,4 @@ interface Props {
 const {issue} = Astro.props;
 const age = issue.created_at.until(Temporal.Now.instant());
 ---
-<div><span><a href={issue.url}>{issue.title}</a></span><span>{formatRoundAge(age)}</span></div>
+<div><a href={issue.url}>{issue.title}</a>: open for {formatRoundAge(age)}</div>

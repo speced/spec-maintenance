@@ -1,5 +1,6 @@
 ---
 import Issue from "@components/Issue.astro";
+import { Temporal } from "@js-temporal/polyfill";
 import Layout from "@layouts/Layout.astro";
 import { IssueSummary, RepoSummary } from "@lib/repo-summaries";
 import {
@@ -45,6 +46,10 @@ for (const issue of details.issues) {
         untriaged.push(issue);
     }
 }
+
+urgent.sort((a, b) => Temporal.Instant.compare(b.created_at, a.created_at));
+important.sort((a, b) => Temporal.Instant.compare(b.created_at, a.created_at));
+untriaged.sort((a, b) => Temporal.Instant.compare(b.created_at, a.created_at));
 ---
 
 <Layout title={`${org}/${repo} Issues`}>
