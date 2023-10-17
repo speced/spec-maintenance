@@ -4,8 +4,15 @@
 "use strict";
 
 const path = require('path');
-const config = require("../config.json");
+const { program } = require('commander');
 
+const config = {};
+
+program
+  .option('--gh-token <token>', undefined, process.env["GITHUB_TOKEN"] || "missing-GitHub-token")
+  .option('--out-dir <directory>', "where to write scan results", "summaries");
+
+const options = program.opts();
 
 // environment variables
 
@@ -20,11 +27,12 @@ config.debug = (config.env === "development") || config.debug || false;
 
 // auth tokens and keys
 
-config.ghToken = config.ghToken || "missing-GitHub-token";
+config.ghToken = options.ghToken;
 
 // app specifics
 
 config.cache = config.cache || "https://labs.w3.org/github-cache";
+config.outDir = options.outDir;
 
 // dump the configuration into the server log (but not in the server monitor!)
 console.log("".padStart(80, '-'));

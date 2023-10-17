@@ -17,6 +17,9 @@ dependencies:
   browser-specs:
     specifier: ^3.62.0
     version: 3.65.0
+  commander:
+    specifier: ^11.1.0
+    version: 11.1.0
   node-fetch:
     specifier: ^3.3.2
     version: 3.3.2
@@ -134,6 +137,11 @@ packages:
 
   /browser-specs@3.65.0:
     resolution: {integrity: sha512-z0XFyjREfFZ3hGjKoPKnHHJFCbtkEh94EtkSQ3fmLFwcSTo2dJzrPD1qdbTiOJisIdRntwcmp1dXqLdCrKCbUg==}
+    dev: false
+
+  /commander@11.1.0:
+    resolution: {integrity: sha512-yPVavfyCcRhmorC7rWlkHn15b4wDVgVmBA7kV4QVBsF7kv/9TKJAbAXVTxvTnwP8HHKjRCJDClKbciiYS7p0DQ==}
+    engines: {node: '>=16'}
     dev: false
 
   /data-uri-to-buffer@4.0.1:

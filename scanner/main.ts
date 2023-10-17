@@ -2,6 +2,7 @@ import Bottleneck from "bottleneck";
 import specs from 'browser-specs' assert { type: "json" };
 import fs from 'node:fs/promises';
 import { mean, quantile } from 'simple-statistics';
+import config from './third_party/config.cjs';
 import octokit from './third_party/octokit-cache.js';
 
 const ghLimiter = new Bottleneck({
@@ -63,7 +64,7 @@ function ageStats(arr: number[]): AgeStats | undefined {
 async function analyzeRepo(org: string, repo: string, globalStats: GlobalStatsInput): Promise<RepoSummary> {
   let result: RepoSummary | null = null;
   try {
-    result = JSON.parse(await fs.readFile(`summaries/${org}/${repo}.json`, { encoding: 'utf8' }),
+    result = JSON.parse(await fs.readFile(`${config.outDir}/${org}/${repo}.json`, { encoding: 'utf8' }),
       (key, value) => {
         if (['created_at', 'closed_at'].includes(key)) {
           return new Date(value);
@@ -116,8 +117,8 @@ async function analyzeRepo(org: string, repo: string, globalStats: GlobalStatsIn
   globalStats.closeAgesMs.push(...closeAgesMs);
   globalStats.openAgesMs.push(...openAgesMs);
 
-  await fs.mkdir(`summaries/${org}`, { recursive: true });
-  await fs.writeFile(`summaries/${org}/${repo}.json`, JSON.stringify(result, undefined, 2));
+  await fs.mkdir(`${config.outDir}/${org}`, { recursive: true });
+  await fs.writeFile(`${config.outDir}/${org}/${repo}.json`, JSON.stringify(result, undefined, 2));
 
   return result;
 }
@@ -148,7 +149,7 @@ async function main() {
   const globalStats: GlobalStatsInput = { openAgesMs: [], closeAgesMs: [] };
   await Promise.all(githubRepos.map(({ org, repo }) => analyzeRepo(org, repo, globalStats)));
 
-  await fs.writeFile("summaries/global.json", JSON.stringify({
+  await fs.writeFile(`${config.outDir}/global.json`, JSON.stringify({
     ageAtCloseMs: ageStats(globalStats.closeAgesMs),
     openAgeMs: ageStats(globalStats.openAgesMs),
   }, undefined, 2));
