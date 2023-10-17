@@ -1,5 +1,6 @@
 ---
 import BugStats from "@components/BugStats.astro";
+import { Temporal } from "@js-temporal/polyfill";
 import { AgeStats, RepoSummary } from "@lib/repo-summaries";
 import { z } from "zod";
 import Layout from "../layouts/Layout.astro";
@@ -14,48 +15,62 @@ const GlobalStats = z.object({
 const globalStats = GlobalStats.parse(
     (await Astro.glob("../../../scanner/summaries/global.json"))[0]
 );
+const maxAge = Temporal.Duration.from({
+    // Use the open age because it's bigger in practice.
+    seconds: Math.round(globalStats.openAgeMs[90].total("seconds") * 1.2),
+});
 ---
 
 <Layout title="Browser Spec Maintenance Status">
     <main>
         <h1>Browser Spec Maintenance Status</h1>
-        <section id="global-stats">
-            <BugStats
-                ageStats={globalStats.openAgeMs}
-                description="open bugs"
-            />
-            <BugStats
-                ageStats={globalStats.ageAtCloseMs}
-                description="closed bugs"
-            />
-        </section>
-
-        <section>
-            <ul>
+        <table>
+            <tbody>
+                <tr
+                    ><td>{globalStats.openAgeMs.count} total open bugs</td><td>
+                        <BugStats
+                            ageStats={globalStats.openAgeMs}
+                            description="open bugs"
+                            {maxAge}
+                        /></td
+                    ></tr
+                >
+                <tr
+                    ><td>{globalStats.ageAtCloseMs.count} total closed bugs</td>
+                    <td
+                        ><BugStats
+                            ageStats={globalStats.ageAtCloseMs}
+                            description="closed bugs"
+                            {maxAge}
+                        />
+                    </td></tr
+                >
+            </tbody>
+            <tbody>
+                <tr><td></td><th>Open Bugs</th></tr>
                 {
                     repos.map((repo) => (
-                        <li>
-                            <a href={`${repo.org}/${repo.repo}`}>
-                                {repo.org}/{repo.repo}
-                            </a>
-                            {repo.openAgeMs ? (
-                                <BugStats
-                                    ageStats={repo.openAgeMs}
-                                    description="open bugs"
-                                />
-                            ) : (
-                                ": 0 open bugs"
-                            )}
-                        </li>
+                        <tr>
+                            <td>
+                                <a href={`${repo.org}/${repo.repo}`}>
+                                    {repo.org}/{repo.repo}
+                                </a>
+                            </td>
+                            <td>
+                                {repo.openAgeMs ? (
+                                    <BugStats
+                                        ageStats={repo.openAgeMs}
+                                        description="open bugs"
+                                        {maxAge}
+                                    />
+                                ) : (
+                                    "No open bugs"
+                                )}
+                            </td>
+                        </tr>
                     ))
                 }
-            </ul>
-        </section>
+            </tbody>
+        </table>
     </main>
 </Layout>
-
-<style>
-    #global-stats {
-        display: flex;
-    }
-</style>

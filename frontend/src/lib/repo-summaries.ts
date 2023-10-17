@@ -12,13 +12,19 @@ export const IssueSummary = z.object({
     labels: z.array(z.string()),
     ageAtCloseMs: z.number().optional(),
 })
-
 export type IssueSummary = z.infer<typeof IssueSummary>;
+
+const durationInMs = z.number().transform(val => Temporal.Duration.from({ milliseconds: Math.round(val) }));
 
 export const AgeStats = z.object({
     count: z.number(),
-    mean: z.number().transform(val => Temporal.Duration.from({ milliseconds: Math.round(val) })),
-}).catchall(/*percentiles*/ z.number().transform(val => Temporal.Duration.from({ milliseconds: val })));
+    mean: durationInMs,
+    10: durationInMs,
+    25: durationInMs,
+    50: durationInMs,
+    75: durationInMs,
+    90: durationInMs,
+});
 export type AgeStats = z.infer<typeof AgeStats>;
 
 export const RepoSummary = z.object({

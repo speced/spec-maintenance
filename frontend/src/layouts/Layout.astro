@@ -19,9 +19,13 @@ const { title } = Astro.props;
     </body>
 </html>
 <style is:global>
-	body {
-		font-family: system-ui;
-	}
+    :root {
+        --bg: white;
+        --fg: black;
+    }
+    body {
+        font-family: system-ui;
+    }
     .ord {
         font-variant-numeric: ordinal;
     }
