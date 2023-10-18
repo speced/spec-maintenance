@@ -73,7 +73,8 @@ octokit.get = async function (query_url, options) {
         // so try again
         return attempt(number++);
       }
-      throw new Error("github-cache complained " + res.status + ` ${query_url}: ${await res.text()}`);
+      throw new Error("github-cache complained " + res.status + ` ${query_url}: ${await res.text()}`,
+        { cause: res.status });
     });
   }
   return attempt(0);
