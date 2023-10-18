@@ -5,10 +5,15 @@
 
 import { Octokit as BaseOctokit } from "@octokit/core";
 import { throttling } from "@octokit/plugin-throttling";
+import Bottleneck from "bottleneck";
 import fetch from "node-fetch";
 import config from "./config.cjs";
 import monitor from './monitor.cjs';
 const Octokit = BaseOctokit.plugin(throttling);
+
+const ghLimiter = new Bottleneck({
+  maxConcurrent: 20,
+});
 
 const MAX_RETRIES = 3;
 
@@ -65,7 +70,7 @@ octokit.get = async function (query_url, options) {
   }
 
   function attempt(number) {
-    return fetch(config.cache + query_url).then(async res => {
+    return ghLimiter.schedule(()=>fetch(config.cache + query_url)).then(async res => {
       if (res.ok) return res.json();
       if (res.status === 504 && number < 3) {
         // The server was acting as a gateway or proxy and

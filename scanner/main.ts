@@ -1,42 +1,167 @@
+import { Octokit as OctokitCore } from '@octokit/core';
+import { paginateGraphql } from '@octokit/plugin-paginate-graphql';
 import Bottleneck from "bottleneck";
 import specs from 'browser-specs' assert { type: "json" };
 import fs from 'node:fs/promises';
 import { mean, quantile } from 'simple-statistics';
 import config from './third_party/config.cjs';
-import octokit from './third_party/octokit-cache.js';
 
 const ghLimiter = new Bottleneck({
-  maxConcurrent: 20,
+  maxConcurrent: 2,
 });
 
-async function getIssues(octokit, org, repo): Promise<any[]> {
-  return ghLimiter.schedule(() => octokit.get(`/v3/repos/${org}/${repo}/issues?state=all&fields=number,html_url,title,created_at,labels,closed_at,pull_request,milestone`));
-}
-async function getComments(octokit, org, repo, issueNumber: number): Promise<any[]> {
-  try {
-    return await ghLimiter.schedule(() =>
-      octokit.get(`/v3/repos/${org}/${repo}/issues/${issueNumber}/comments?fields=created_at`));
-  } catch (e) {
-    if (e instanceof Error && e.cause === 404) {
-      // If an issue gets deleted, its comment list will return 404. Pretend it has no comments in
-      // that case.
-      return [];
-    }
-    throw e;
+const Octokit = OctokitCore.plugin(paginateGraphql);
+const octokit = new Octokit({
+  auth: config.ghToken,
+  userAgent: 'https://github.com/jyasskin/spec-maintenance',
+});
+
+async function getIssues(org, repo): Promise<any[]> {
+  const result: any = await ghLimiter.schedule(() => octokit.graphql(
+    `query ($owner: String!, $repoName: String!) {
+      rateLimit {
+        limit
+        cost
+        remaining
+        resetAt
+      }
+      repository(owner: $owner, name: $repoName) {
+        issues(first: 100) {
+          pageInfo {
+            endCursor
+            hasNextPage
+          }
+          nodes {
+            title
+            url
+            createdAt
+            closedAt
+            labels(first: 100) {
+              nodes {
+                name
+              }
+            }
+            comments(first: 1, orderBy: {field: UPDATED_AT, direction: ASC}) {
+              nodes {
+                createdAt
+              }
+            }
+          }
+        }
+        pullRequests(first: 100) {
+          pageInfo {
+            endCursor
+            hasNextPage
+          }
+          nodes {
+            title
+            url
+            createdAt
+            closedAt
+            isDraft
+            labels(first: 100) {
+              nodes {
+                name
+              }
+            }
+            comments(first: 1, orderBy: {field: UPDATED_AT, direction: ASC}) {
+              nodes {
+                createdAt
+              }
+            }
+          }
+        }
+      }
+    }`,
+    {
+      owner: org,
+      repoName: repo,
+    }));
+  const issuesAndPRsPromises: Promise<any>[] = [];
+  if (result.repository.issues.pageInfo.hasNextPage) {
+    issuesAndPRsPromises.push(ghLimiter.schedule(() => octokit.graphql.paginate(
+      `query ($owner: String!, $repoName: String!, $cursor: String!) {
+        repository(owner: $owner, name: $repoName) {
+          issues(first: 100, after: $cursor) {
+            pageInfo {
+              endCursor
+              hasNextPage
+            }
+            nodes {
+              title
+              url
+              createdAt
+              closedAt
+              labels(first: 100) {
+                nodes {
+                  name
+                }
+              }
+              comments(first: 1, orderBy: {field: UPDATED_AT, direction: ASC}) {
+                nodes {
+                  createdAt
+                }
+              }
+            }
+          }
+        }
+      }`, {
+      owner: org,
+      repoName: repo,
+      cursor: result.repository.issues.pageInfo.endCursor
+    }).then(remainingIssues => {
+      result.repository.issues.nodes.push(...remainingIssues.repository.issues.nodes);
+    })));
   }
+  if (result.repository.pullRequests.pageInfo.hasNextPage) {
+    issuesAndPRsPromises.push(ghLimiter.schedule(() => octokit.graphql.paginate(
+      `query ($owner: String!, $repoName: String!, $cursor: String!) {
+        repository(owner: $owner, name: $repoName) {
+          pullRequests(first: 100, after: $cursor) {
+            pageInfo {
+              endCursor
+              hasNextPage
+            }
+            nodes {
+              title
+              url
+              createdAt
+              closedAt
+              isDraft
+              labels(first: 100) {
+                nodes {
+                  name
+                }
+              }
+              comments(first: 1, orderBy: {field: UPDATED_AT, direction: ASC}) {
+                nodes {
+                  createdAt
+                }
+              }
+            }
+          }
+        }
+      }`, {
+      owner: org,
+      repoName: repo,
+      cursor: result.repository.pullRequests.pageInfo.endCursor
+    }).then(remainingPRs => {
+      result.repository.pullRequests.nodes.push(...remainingPRs.repository.pullRequests.nodes);
+    })));
+  }
+  await Promise.all(issuesAndPRsPromises);
+  return result.repository.issues.nodes.concat(result.repository.pullRequests.nodes);
 }
 
 const now = Date.now();
 
 interface IssueSummary {
-  number: number;
   url: string;
   title: string;
   created_at: Date;
   closed_at?: Date;
   ageMs: number;
   pull_request?: { draft: boolean };
-  milestone?: string;
   labels: string[];
   firstCommentLatencyMs?: number;
 };
@@ -60,6 +185,8 @@ interface RepoSummary {
 }
 
 interface GlobalStatsInput {
+  totalRepos: number,
+  reposFinished: number;
   closeAgesMs: number[];
   openAgesMs: number[];
   openFirstCommentLatencyMs: number[];
@@ -82,6 +209,7 @@ function ageStats(arr: number[]): AgeStats | undefined {
 }
 
 async function analyzeRepo(org: string, repo: string, globalStats: GlobalStatsInput): Promise<RepoSummary> {
+  globalStats.totalRepos++;
   let result: RepoSummary | null = null;
   try {
     result = JSON.parse(await fs.readFile(`${config.outDir}/${org}/${repo}.json`, { encoding: 'utf8' }),
@@ -94,7 +222,7 @@ async function analyzeRepo(org: string, repo: string, globalStats: GlobalStatsIn
   } catch {
     // On error, fetch the body.
   }
-  if (!result || now - result.cachedAt > 60 * 60 * 1000) {
+  if (!result || now - result.cachedAt > 5 * 60 * 60 * 1000) {
     result = {
       cachedAt: now,
       org, repo,
@@ -102,33 +230,29 @@ async function analyzeRepo(org: string, repo: string, globalStats: GlobalStatsIn
       labelsPresent: false
     };
 
-    result.issues = await Promise.all((await getIssues(octokit, org, repo)).map(async issue => {
-      const created_at = new Date(issue.created_at);
+    result.issues = (await getIssues(org, repo)).map(issue => {
+      const created_at = new Date(issue.createdAt);
       const info: IssueSummary = {
-        number: issue.number,
-        url: issue.html_url,
+        url: issue.url,
         title: issue.title,
         created_at,
         ageMs: now - created_at.getTime(),
-        labels: issue.labels?.map(label => label.name) ?? [],
+        labels: issue.labels.nodes.map(label => label.name),
       };
-      if (issue.closed_at) {
-        info.closed_at = new Date(issue.closed_at);
-        info.ageMs = now - info.closed_at.getTime();
+      if (issue.closedAt) {
+        info.closed_at = new Date(issue.closedAt);
+        info.ageMs = info.closed_at.getTime() - info.created_at.getTime();
       }
-      if (issue.pull_request) {
-        info.pull_request = { draft: issue.pull_request.draft }
+      if (issue.isDraft) {
+        info.pull_request = { draft: issue.isDraft }
       }
-      if (issue.milestone) {
-        info.milestone = issue.milestone.title;
-      }
-      const commentTimes = (await getComments(octokit, org, repo, issue.number)).map(
-        comment => new Date(comment.created_at).getTime());
+      const commentTimes = issue.comments.nodes.map(
+        comment => new Date(comment.createdAt).getTime());
       if (commentTimes.length > 0) {
         info.firstCommentLatencyMs = Math.min(...commentTimes) - info.created_at.getTime();
       }
       return info;
-    }));
+    });
   }
 
   const closeAgesMs: number[] = [];
@@ -160,6 +284,9 @@ async function analyzeRepo(org: string, repo: string, globalStats: GlobalStatsIn
   await fs.mkdir(`${config.outDir}/${org}`, { recursive: true });
   await fs.writeFile(`${config.outDir}/${org}/${repo}.json`, JSON.stringify(result, undefined, 2));
 
+  globalStats.reposFinished++;
+  console.log(`[${globalStats.reposFinished}/${globalStats.totalRepos} ${new Date()}] ${org}/${repo}`);
+
   return result;
 }
 
@@ -187,6 +314,8 @@ async function main() {
   }
 
   const globalStats: GlobalStatsInput = {
+    totalRepos: 0,
+    reposFinished: 0,
     openAgesMs: [], closeAgesMs: [],
     openFirstCommentLatencyMs: [], closedFirstCommentLatencyMs: []
   };

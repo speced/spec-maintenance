@@ -2,7 +2,6 @@ import { Temporal, toTemporalInstant } from '@js-temporal/polyfill';
 import { z } from 'zod';
 
 export const IssueSummary = z.object({
-    number: z.number(),
     url: z.string().url(),
     title: z.string(),
     created_at: z.coerce.date().transform(val => toTemporalInstant.call(val)),

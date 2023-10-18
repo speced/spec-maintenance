@@ -8,6 +8,9 @@ dependencies:
   '@octokit/core':
     specifier: ^5.0.1
     version: 5.0.1
+  '@octokit/plugin-paginate-graphql':
+    specifier: ^4.0.0
+    version: 4.0.0(@octokit/core@5.0.1)
   '@octokit/plugin-throttling':
     specifier: ^8.0.0
     version: 8.0.0(@octokit/core@5.0.1)
@@ -78,6 +81,15 @@ packages:
 
   /@octokit/openapi-types@19.0.0:
     resolution: {integrity: sha512-PclQ6JGMTE9iUStpzMkwLCISFn/wDeRjkZFIKALpvJQNBGwDoYYi2fFvuHwssoQ1rXI5mfh6jgTgWuddeUzfWw==}
+    dev: false
+
+  /@octokit/plugin-paginate-graphql@4.0.0(@octokit/core@5.0.1):
+    resolution: {integrity: sha512-7HcYW5tP7/Z6AETAPU14gp5H5KmCPT3hmJrS/5tO7HIgbwenYmgw4OY9Ma54FDySuxMwD+wsJlxtuGWwuZuItA==}
+    engines: {node: '>= 18'}
+    peerDependencies:
+      '@octokit/core': '>=5'
+    dependencies:
+      '@octokit/core': 5.0.1
     dev: false
 
   /@octokit/plugin-throttling@8.0.0(@octokit/core@5.0.1):

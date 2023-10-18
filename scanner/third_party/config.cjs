@@ -12,6 +12,7 @@ program
   .option('--gh-token <token>', undefined, process.env["GITHUB_TOKEN"] || "missing-GitHub-token")
   .option('--out-dir <directory>', "where to write scan results", "summaries");
 
+program.parse();
 const options = program.opts();
 
 // environment variables
