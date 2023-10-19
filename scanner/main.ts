@@ -24,8 +24,8 @@ const octokit = new Octokit({
   auth: config.ghToken,
   userAgent: 'https://github.com/jyasskin/spec-maintenance',
   throttle: {
-    onRateLimit: onRateLimit('Rate limit'),
-    onSecondaryRateLimit: onRateLimit('Secondary rate limit'),
+    onRateLimit: ()=>false, //onRateLimit('Rate limit'),
+    onSecondaryRateLimit: ()=>false, //onRateLimit('Secondary rate limit'),
   },
 });
 
