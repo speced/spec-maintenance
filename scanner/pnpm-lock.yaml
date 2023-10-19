@@ -14,9 +14,6 @@ dependencies:
   '@octokit/plugin-throttling':
     specifier: ^8.0.0
     version: 8.0.0(@octokit/core@5.0.1)
-  bottleneck:
-    specifier: ^2.19.5
-    version: 2.19.5
   browser-specs:
     specifier: ^3.62.0
     version: 3.65.0

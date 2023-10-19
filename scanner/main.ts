@@ -1,23 +1,36 @@
 import { Octokit as OctokitCore } from '@octokit/core';
 import { paginateGraphql } from '@octokit/plugin-paginate-graphql';
-import Bottleneck from "bottleneck";
+import { throttling } from '@octokit/plugin-throttling';
 import specs from 'browser-specs' assert { type: "json" };
 import fs from 'node:fs/promises';
 import { mean, quantile } from 'simple-statistics';
 import config from './third_party/config.cjs';
 
-const ghLimiter = new Bottleneck({
-  maxConcurrent: process.env.CI ? 1 : 2,
-});
+const Octokit = OctokitCore.plugin(throttling, paginateGraphql);
+function onRateLimit(limitName: string) {
+  return (retryAfter, options: any, octokit, retryCount) => {
+    octokit.log.warn(
+      `${limitName} exceeded for request ${JSON.stringify(options)}`,
+    );
 
-const Octokit = OctokitCore.plugin(paginateGraphql);
+    if (retryCount < 1 && retryAfter <= 120) {
+      // Retry once and for at most 2 minutes.
+      console.info(`Retrying after ${retryAfter} seconds.`);
+      return true;
+    }
+  };
+}
 const octokit = new Octokit({
   auth: config.ghToken,
   userAgent: 'https://github.com/jyasskin/spec-maintenance',
+  throttle: {
+    onRateLimit: onRateLimit('Rate limit'),
+    onSecondaryRateLimit: onRateLimit('Secondary rate limit'),
+  },
 });
 
 async function getIssues(org, repo): Promise<any[]> {
-  const result: any = await ghLimiter.schedule(() => octokit.graphql(
+  const result: any = await octokit.graphql(
     `query ($owner: String!, $repoName: String!) {
       repository(owner: $owner, name: $repoName) {
         issues(first: 100) {
@@ -70,10 +83,10 @@ async function getIssues(org, repo): Promise<any[]> {
     {
       owner: org,
       repoName: repo,
-    }));
-  const issuesAndPRsPromises: Promise<any>[] = [];
+    });
+
   if (result.repository.issues.pageInfo.hasNextPage) {
-    issuesAndPRsPromises.push(ghLimiter.schedule(() => octokit.graphql.paginate(
+    const remainingIssues = await octokit.graphql.paginate(
       `query ($owner: String!, $repoName: String!, $cursor: String!) {
         repository(owner: $owner, name: $repoName) {
           issues(first: 100, after: $cursor) {
@@ -103,12 +116,11 @@ async function getIssues(org, repo): Promise<any[]> {
       owner: org,
       repoName: repo,
       cursor: result.repository.issues.pageInfo.endCursor
-    }).then(remainingIssues => {
-      result.repository.issues.nodes.push(...remainingIssues.repository.issues.nodes);
-    })));
+    });
+    result.repository.issues.nodes.push(...remainingIssues.repository.issues.nodes);
   }
   if (result.repository.pullRequests.pageInfo.hasNextPage) {
-    issuesAndPRsPromises.push(ghLimiter.schedule(() => octokit.graphql.paginate(
+    const remainingPRs = await octokit.graphql.paginate(
       `query ($owner: String!, $repoName: String!, $cursor: String!) {
         repository(owner: $owner, name: $repoName) {
           pullRequests(first: 100, after: $cursor) {
@@ -139,24 +151,21 @@ async function getIssues(org, repo): Promise<any[]> {
       owner: org,
       repoName: repo,
       cursor: result.repository.pullRequests.pageInfo.endCursor
-    }).then(remainingPRs => {
-      result.repository.pullRequests.nodes.push(...remainingPRs.repository.pullRequests.nodes);
-    })));
+    })
+    result.repository.pullRequests.nodes.push(...remainingPRs.repository.pullRequests.nodes);
   }
-  await Promise.all(issuesAndPRsPromises);
   return result.repository.issues.nodes.concat(result.repository.pullRequests.nodes);
 }
 
 async function logRateLimit() {
-  console.log(await ghLimiter.schedule(() => octokit.graphql(
+  console.log(await octokit.graphql(
     `query {
       rateLimit {
         limit
-        cost
         remaining
         resetAt
       }
-    }`)));
+    }`));
 }
 
 const now = Date.now();
