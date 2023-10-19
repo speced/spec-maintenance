@@ -226,7 +226,6 @@ function ageStats(arr: number[]): AgeStats | undefined {
 }
 
 async function analyzeRepo(org: string, repo: string, globalStats: GlobalStatsInput): Promise<RepoSummary> {
-  globalStats.totalRepos++;
   let result: RepoSummary | null = null;
   try {
     result = JSON.parse(await fs.readFile(`${config.outDir}/${org}/${repo}.json`, { encoding: 'utf8' }),
@@ -338,12 +337,14 @@ async function main() {
   logRateLimit();
 
   const globalStats: GlobalStatsInput = {
-    totalRepos: 0,
+    totalRepos: githubRepos.length,
     reposFinished: 0,
     openAgesMs: [], closeAgesMs: [],
     firstCommentLatencyMs: [], openFirstCommentLatencyMs: [], closedFirstCommentLatencyMs: []
   };
-  await Promise.all(githubRepos.map(({ org, repo }) => analyzeRepo(org, repo, globalStats)));
+  for (const {org, repo} of githubRepos) {
+    await analyzeRepo(org, repo, globalStats);
+  }
 
   await fs.writeFile(`${config.outDir}/global.json`, JSON.stringify({
     ageAtCloseMs: ageStats(globalStats.closeAgesMs),
