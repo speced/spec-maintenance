@@ -7,7 +7,7 @@ import { mean, quantile } from 'simple-statistics';
 import config from './third_party/config.cjs';
 
 const ghLimiter = new Bottleneck({
-  maxConcurrent: 2,
+  maxConcurrent: process.env.CI ? 1 : 2,
 });
 
 const Octokit = OctokitCore.plugin(paginateGraphql);
