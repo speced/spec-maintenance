@@ -180,6 +180,7 @@ interface RepoSummary {
   labelsPresent: boolean;
   ageAtCloseMs?: AgeStats;
   openAgeMs?: AgeStats;
+  firstCommentLatencyMs?: AgeStats;
   openFirstCommentLatencyMs?: AgeStats;
   closedFirstCommentLatencyMs?: AgeStats;
 }
@@ -189,6 +190,7 @@ interface GlobalStatsInput {
   reposFinished: number;
   closeAgesMs: number[];
   openAgesMs: number[];
+  firstCommentLatencyMs: number[];
   openFirstCommentLatencyMs: number[];
   closedFirstCommentLatencyMs: number[];
 }
@@ -257,27 +259,32 @@ async function analyzeRepo(org: string, repo: string, globalStats: GlobalStatsIn
 
   const closeAgesMs: number[] = [];
   const openAgesMs: number[] = [];
+  const firstCommentLatencyMs: number[] = [];
   const closedFirstCommentLatencyMs: number[] = [];
   const openFirstCommentLatencyMs: number[] = [];
   for (const issue of result.issues) {
     if (issue.closed_at) {
       closeAgesMs.push(issue.closed_at.valueOf() - issue.created_at.valueOf());
       if (issue.firstCommentLatencyMs) {
+        firstCommentLatencyMs.push(issue.firstCommentLatencyMs);
         closedFirstCommentLatencyMs.push(issue.firstCommentLatencyMs);
       }
     } else {
       openAgesMs.push(result.cachedAt - issue.created_at.valueOf());
       if (issue.firstCommentLatencyMs) {
+        firstCommentLatencyMs.push(issue.firstCommentLatencyMs);
         openFirstCommentLatencyMs.push(issue.firstCommentLatencyMs);
       }
     }
   }
   result.ageAtCloseMs = ageStats(closeAgesMs);
   result.openAgeMs = ageStats(openAgesMs);
+  result.firstCommentLatencyMs = ageStats(firstCommentLatencyMs);
   result.closedFirstCommentLatencyMs = ageStats(closedFirstCommentLatencyMs);
   result.openFirstCommentLatencyMs = ageStats(openFirstCommentLatencyMs);
   globalStats.closeAgesMs.push(...closeAgesMs);
   globalStats.openAgesMs.push(...openAgesMs);
+  globalStats.firstCommentLatencyMs.push(...firstCommentLatencyMs);
   globalStats.closedFirstCommentLatencyMs.push(...closedFirstCommentLatencyMs);
   globalStats.openFirstCommentLatencyMs.push(...openFirstCommentLatencyMs);
 
@@ -317,7 +324,7 @@ async function main() {
     totalRepos: 0,
     reposFinished: 0,
     openAgesMs: [], closeAgesMs: [],
-    openFirstCommentLatencyMs: [], closedFirstCommentLatencyMs: []
+    firstCommentLatencyMs: [], openFirstCommentLatencyMs: [], closedFirstCommentLatencyMs: []
   };
   await Promise.all(githubRepos.map(({ org, repo }) => analyzeRepo(org, repo, globalStats)));
 

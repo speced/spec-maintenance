@@ -34,5 +34,8 @@ export const RepoSummary = z.object({
     labelsPresent: z.boolean(),
     ageAtCloseMs: AgeStats.optional(),
     openAgeMs: AgeStats.optional(),
+    firstCommentLatencyMs: AgeStats.optional(),
+    openFirstCommentLatencyMs: AgeStats.optional(),
+    closedFirstCommentLatencyMs: AgeStats.optional(),
 });
 export type RepoSummary = z.infer<typeof RepoSummary>;

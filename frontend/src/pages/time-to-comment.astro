@@ -19,7 +19,7 @@ const globalStats = GlobalStats.parse(
 );
 const maxAge = Temporal.Duration.from({
     // Use the open age because it's bigger in practice.
-    seconds: Math.round(globalStats.openAgeMs[90].total("seconds") * 1.2),
+    seconds: Math.round(globalStats.openFirstCommentLatencyMs[90].total("seconds")),
 });
 ---
 
@@ -28,16 +28,6 @@ const maxAge = Temporal.Duration.from({
         <h1>Browser Spec Maintenance Status</h1>
         <table>
             <tbody>
-                <tr>
-                    <td>{globalStats.openAgeMs.count} total open bugs</td>
-                    <td>
-                        <BugStats
-                            ageStats={globalStats.openAgeMs}
-                            description="open bugs"
-                            {maxAge}
-                        />
-                    </td>
-                </tr>
                 <tr>
                     <td>{globalStats.ageAtCloseMs.count} total closed bugs</td>
                     <td>
@@ -76,7 +66,7 @@ const maxAge = Temporal.Duration.from({
                 </tr>
             </tbody>
             <tbody>
-                <tr><td></td><th>Open Bugs</th></tr>
+                <tr><td></td><th>Time to First Comment</th></tr>
                 {
                     repos.map((repo) => (
                         <tr>
@@ -86,14 +76,14 @@ const maxAge = Temporal.Duration.from({
                                 </a>
                             </td>
                             <td>
-                                {repo.openAgeMs ? (
+                                {repo.firstCommentLatencyMs ? (
                                     <BugStats
-                                        ageStats={repo.openAgeMs}
-                                        description="open bugs"
+                                        ageStats={repo.firstCommentLatencyMs}
+                                        description="bugs with comments"
                                         {maxAge}
                                     />
                                 ) : (
-                                    "No open bugs"
+                                    "No bugs with comments"
                                 )}
                             </td>
                         </tr>
