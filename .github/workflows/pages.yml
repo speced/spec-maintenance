@@ -45,7 +45,7 @@ jobs:
         run: pnpm install
         working-directory: scanner
       - name: Scan specification repositories
-        run: pnpm scan
+        run: pnpm scan --gh-token '${{ secrets.GITHUB_TOKEN }}'
         working-directory: scanner
       - name: Install frontend dependencies
         run: pnpm install
