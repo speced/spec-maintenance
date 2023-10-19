@@ -10,6 +10,7 @@ export const IssueSummary = z.object({
     milestone: z.string().optional(),
     labels: z.array(z.string()),
     ageAtCloseMs: z.number().optional(),
+    firstCommentLatencyMs: z.number().optional(),
 })
 export type IssueSummary = z.infer<typeof IssueSummary>;
 

@@ -24,8 +24,8 @@ const octokit = new Octokit({
   auth: config.ghToken,
   userAgent: 'https://github.com/jyasskin/spec-maintenance',
   throttle: {
-    onRateLimit: ()=>false, //onRateLimit('Rate limit'),
-    onSecondaryRateLimit: ()=>false, //onRateLimit('Secondary rate limit'),
+    onRateLimit: onRateLimit('Rate limit'),
+    onSecondaryRateLimit: onRateLimit('Secondary rate limit'),
   },
 });
 
@@ -349,6 +349,7 @@ async function main() {
   await fs.writeFile(`${config.outDir}/global.json`, JSON.stringify({
     ageAtCloseMs: ageStats(globalStats.closeAgesMs),
     openAgeMs: ageStats(globalStats.openAgesMs),
+    firstCommentLatencyMs: ageStats(globalStats.firstCommentLatencyMs),
     closedFirstCommentLatencyMs: ageStats(globalStats.closedFirstCommentLatencyMs),
     openFirstCommentLatencyMs: ageStats(globalStats.openFirstCommentLatencyMs),
   }, undefined, 2));

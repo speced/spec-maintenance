@@ -1,0 +1,12 @@
+{
+	"type": "module",
+	"devDependencies": {
+		"@tsconfig/node20": "^20.1.2",
+		"@types/node": "^20.8.7",
+		"typescript": "^5.2.2"
+	},
+	"dependencies": {
+		"@js-temporal/polyfill": "^0.4.4",
+		"zod": "^3.22.4"
+	}
+}
