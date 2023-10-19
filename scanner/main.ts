@@ -19,12 +19,6 @@ const octokit = new Octokit({
 async function getIssues(org, repo): Promise<any[]> {
   const result: any = await ghLimiter.schedule(() => octokit.graphql(
     `query ($owner: String!, $repoName: String!) {
-      rateLimit {
-        limit
-        cost
-        remaining
-        resetAt
-      }
       repository(owner: $owner, name: $repoName) {
         issues(first: 100) {
           pageInfo {
@@ -151,6 +145,18 @@ async function getIssues(org, repo): Promise<any[]> {
   }
   await Promise.all(issuesAndPRsPromises);
   return result.repository.issues.nodes.concat(result.repository.pullRequests.nodes);
+}
+
+async function logRateLimit() {
+  console.log(await ghLimiter.schedule(() => octokit.graphql(
+    `query {
+      rateLimit {
+        limit
+        cost
+        remaining
+        resetAt
+      }
+    }`)));
 }
 
 const now = Date.now();
@@ -320,6 +326,8 @@ async function main() {
     githubRepos.push({ org, repo });
   }
 
+  logRateLimit();
+
   const globalStats: GlobalStatsInput = {
     totalRepos: 0,
     reposFinished: 0,
@@ -334,6 +342,8 @@ async function main() {
     closedFirstCommentLatencyMs: ageStats(globalStats.closedFirstCommentLatencyMs),
     openFirstCommentLatencyMs: ageStats(globalStats.openFirstCommentLatencyMs),
   }, undefined, 2));
+
+  logRateLimit();
 }
 
 await main();
