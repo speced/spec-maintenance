@@ -13,8 +13,8 @@ function onRateLimit(limitName: string) {
       `${limitName} exceeded for request ${JSON.stringify(options)}`,
     );
 
-    if (retryCount < 1 && retryAfter <= 120) {
-      // Retry once and for at most 2 minutes.
+    if (retryCount < 1) {
+      // Retry once.
       console.info(`Retrying after ${retryAfter} seconds.`);
       return true;
     }
@@ -43,14 +43,20 @@ async function getIssues(org, repo): Promise<any[]> {
             url
             createdAt
             closedAt
+            author {
+              login
+            }
             labels(first: 100) {
               nodes {
                 name
               }
             }
-            comments(first: 1, orderBy: {field: UPDATED_AT, direction: ASC}) {
+            comments(first: 5, orderBy: {field: UPDATED_AT, direction: ASC}) {
               nodes {
                 createdAt
+                author {
+                  login
+                }
               }
             }
           }
@@ -66,14 +72,20 @@ async function getIssues(org, repo): Promise<any[]> {
             createdAt
             closedAt
             isDraft
+            author {
+              login
+            }
             labels(first: 100) {
               nodes {
                 name
               }
             }
-            comments(first: 1, orderBy: {field: UPDATED_AT, direction: ASC}) {
+            comments(first: 5, orderBy: {field: UPDATED_AT, direction: ASC}) {
               nodes {
                 createdAt
+                author {
+                  login
+                }
               }
             }
           }
@@ -99,14 +111,20 @@ async function getIssues(org, repo): Promise<any[]> {
               url
               createdAt
               closedAt
+              author {
+                login
+              }
               labels(first: 100) {
                 nodes {
                   name
                 }
               }
-              comments(first: 1, orderBy: {field: UPDATED_AT, direction: ASC}) {
+              comments(first: 5, orderBy: {field: UPDATED_AT, direction: ASC}) {
                 nodes {
                   createdAt
+                  author {
+                    login
+                  }
                 }
               }
             }
@@ -134,14 +152,20 @@ async function getIssues(org, repo): Promise<any[]> {
               createdAt
               closedAt
               isDraft
+              author {
+                login
+              }
               labels(first: 100) {
                 nodes {
                   name
                 }
               }
-              comments(first: 1, orderBy: {field: UPDATED_AT, direction: ASC}) {
+              comments(first: 5, orderBy: {field: UPDATED_AT, direction: ASC}) {
                 nodes {
                   createdAt
+                  author {
+                    login
+                  }
                 }
               }
             }
@@ -173,6 +197,7 @@ const now = Date.now();
 interface IssueSummary {
   url: string;
   title: string;
+  author?: string;
   created_at: Date;
   closed_at?: Date;
   ageMs: number;
@@ -251,6 +276,7 @@ async function analyzeRepo(org: string, repo: string, globalStats: GlobalStatsIn
       const info: IssueSummary = {
         url: issue.url,
         title: issue.title,
+        author: issue.author?.login,
         created_at,
         ageMs: now - created_at.getTime(),
         labels: issue.labels.nodes.map(label => label.name),
@@ -262,8 +288,13 @@ async function analyzeRepo(org: string, repo: string, globalStats: GlobalStatsIn
       if (issue.isDraft) {
         info.pull_request = { draft: issue.isDraft }
       }
-      const commentTimes = issue.comments.nodes.map(
-        comment => new Date(comment.createdAt).getTime());
+      const commentTimes = issue.comments.nodes.flatMap(comment => {
+        if (comment.author?.login === issue.author?.login) {
+          // Ignore authors replying to themselves.
+          return [];
+        }
+        return new Date(comment.createdAt).getTime();
+      });
       if (commentTimes.length > 0) {
         info.firstCommentLatencyMs = Math.min(...commentTimes) - info.created_at.getTime();
       }
@@ -306,7 +337,7 @@ async function analyzeRepo(org: string, repo: string, globalStats: GlobalStatsIn
   await fs.writeFile(`${config.outDir}/${org}/${repo}.json`, JSON.stringify(result, undefined, 2));
 
   globalStats.reposFinished++;
-  console.log(`[${globalStats.reposFinished}/${globalStats.totalRepos} ${new Date()}] ${org}/${repo}`);
+  console.log(`[${globalStats.reposFinished}/${globalStats.totalRepos} ${new Date().toISOString()}] ${org}/${repo}`);
 
   return result;
 }
@@ -342,7 +373,7 @@ async function main() {
     openAgesMs: [], closeAgesMs: [],
     firstCommentLatencyMs: [], openFirstCommentLatencyMs: [], closedFirstCommentLatencyMs: []
   };
-  for (const {org, repo} of githubRepos) {
+  for (const { org, repo } of githubRepos) {
     await analyzeRepo(org, repo, globalStats);
   }
 
