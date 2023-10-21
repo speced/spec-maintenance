@@ -29,66 +29,89 @@ const octokit = new Octokit({
   },
 });
 
+const issueQueryContent = `pageInfo {
+  endCursor
+  hasNextPage
+}
+nodes {
+  title
+  url
+  createdAt
+  closedAt
+  author {
+    login
+  }
+  labels(first: 100) {
+    nodes {
+      name
+    }
+  }
+  comments(first: 5) {
+    nodes {
+      publishedAt
+      author {
+        login
+      }
+    }
+  }
+}`;
+const prQueryContent = `pageInfo {
+  endCursor
+  hasNextPage
+}
+nodes {
+  title
+  url
+  createdAt
+  closedAt
+  isDraft
+  author {
+    login
+  }
+  labels(first: 100) {
+    nodes {
+      name
+    }
+  }
+  comments(first: 5) {
+    nodes {
+      publishedAt
+      author {
+        login
+      }
+    }
+  }
+  reviews(first: 5) {
+    nodes {
+      publishedAt
+      author {
+        login
+      }
+    }
+  }
+  reviewThreads(first: 10) {
+    nodes {
+      comments(first: 1) {
+        nodes {
+          publishedAt
+          author {
+            login
+          }
+        }
+      }
+    }
+  }
+}`;
+
 async function getIssues(org, repo): Promise<any[]> {
   const result: any = await octokit.graphql(
     `query ($owner: String!, $repoName: String!) {
       repository(owner: $owner, name: $repoName) {
-        issues(first: 100) {
-          pageInfo {
-            endCursor
-            hasNextPage
-          }
-          nodes {
-            title
-            url
-            createdAt
-            closedAt
-            author {
-              login
-            }
-            labels(first: 100) {
-              nodes {
-                name
-              }
-            }
-            comments(first: 5, orderBy: {field: UPDATED_AT, direction: ASC}) {
-              nodes {
-                createdAt
-                author {
-                  login
-                }
-              }
-            }
-          }
+        issues(first: 50) {
+          ${issueQueryContent}
         }
-        pullRequests(first: 100) {
-          pageInfo {
-            endCursor
-            hasNextPage
-          }
-          nodes {
-            title
-            url
-            createdAt
-            closedAt
-            isDraft
-            author {
-              login
-            }
-            labels(first: 100) {
-              nodes {
-                name
-              }
-            }
-            comments(first: 5, orderBy: {field: UPDATED_AT, direction: ASC}) {
-              nodes {
-                createdAt
-                author {
-                  login
-                }
-              }
-            }
-          }
+        pullRequests(first: 50) {
+          ${prQueryContent}
         }
       }
     }`,
@@ -102,32 +125,7 @@ async function getIssues(org, repo): Promise<any[]> {
       `query ($owner: String!, $repoName: String!, $cursor: String!) {
         repository(owner: $owner, name: $repoName) {
           issues(first: 100, after: $cursor) {
-            pageInfo {
-              endCursor
-              hasNextPage
-            }
-            nodes {
-              title
-              url
-              createdAt
-              closedAt
-              author {
-                login
-              }
-              labels(first: 100) {
-                nodes {
-                  name
-                }
-              }
-              comments(first: 5, orderBy: {field: UPDATED_AT, direction: ASC}) {
-                nodes {
-                  createdAt
-                  author {
-                    login
-                  }
-                }
-              }
-            }
+            ${issueQueryContent}
           }
         }
       }`, {
@@ -142,33 +140,7 @@ async function getIssues(org, repo): Promise<any[]> {
       `query ($owner: String!, $repoName: String!, $cursor: String!) {
         repository(owner: $owner, name: $repoName) {
           pullRequests(first: 100, after: $cursor) {
-            pageInfo {
-              endCursor
-              hasNextPage
-            }
-            nodes {
-              title
-              url
-              createdAt
-              closedAt
-              isDraft
-              author {
-                login
-              }
-              labels(first: 100) {
-                nodes {
-                  name
-                }
-              }
-              comments(first: 5, orderBy: {field: UPDATED_AT, direction: ASC}) {
-                nodes {
-                  createdAt
-                  author {
-                    login
-                  }
-                }
-              }
-            }
+            ${prQueryContent}
           }
         }
       }`, {
@@ -288,13 +260,15 @@ async function analyzeRepo(org: string, repo: string, globalStats: GlobalStatsIn
       if (issue.isDraft) {
         info.pull_request = { draft: issue.isDraft }
       }
-      const commentTimes = issue.comments.nodes.flatMap(comment => {
-        if (comment.author?.login === issue.author?.login) {
-          // Ignore authors replying to themselves.
-          return [];
-        }
-        return new Date(comment.createdAt).getTime();
-      });
+      const commentTimes = issue.comments.nodes.concat(
+        issue.reviews?.nodes, issue.reviewThreads?.nodes?.comments?.nodes)
+        .filter(e=>e!=null).flatMap(comment => {
+          if (comment.author?.login === issue.author?.login) {
+            // Ignore authors replying to themselves.
+            return [];
+          }
+          return new Date(comment.publishedAt).getTime();
+        });
       if (commentTimes.length > 0) {
         info.firstCommentLatencyMs = Math.min(...commentTimes) - info.created_at.getTime();
       }
@@ -309,6 +283,15 @@ async function analyzeRepo(org: string, repo: string, globalStats: GlobalStatsIn
   const openFirstCommentLatencyMs: number[] = [];
   for (const issue of result.issues) {
     if (issue.closed_at) {
+      if (issue.pull_request && !issue.firstCommentLatencyMs) {
+        // Pull requests that are closed with no comments by anyone other than their author, are
+        // usually maintainers just developing in public. This style of development doesn't really
+        // have anything for an SLO to apply to, so I'll ignore this kind of PR.
+
+        // Issues like this are similar, except they might inspire a pull request, which I'm not
+        // analyzing yet, so I'll keep them around.
+        continue;
+      }
       closeAgesMs.push(issue.closed_at.valueOf() - issue.created_at.valueOf());
       if (issue.firstCommentLatencyMs) {
         firstCommentLatencyMs.push(issue.firstCommentLatencyMs);
