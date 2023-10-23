@@ -7,19 +7,19 @@ identify specs that need more maintenance.
 
 All new issues (and PRs) need to get a priority assigned within a reasonable amount of time. To
 determine that amount of time, I looked at the distribution of the times it took issues to get their
-first comment from someone other than the issue's author.
+first comment or review from someone other than the issue's author.
 
 | | Issues that are<br>still open | Issues that have<br>been closed | Overall
 ---: | --- | --- | ---
-10th percentile | 41 minutes | 48 minutes | 48 minutes
-25th percentile | 2 hours    | 1 hour     | 1 hour
-median          | 2 days     | 14 hours | 14 hours
-mean            | 2.1 months | 1 month  | 1 month
-75th percentile | 4 weeks    | 2.2 weeks | 2.2 weeks
-90th percentile | 4.4 months | 1.3 months | 1.3 months
+10th percentile | 21 minutes | 7 minutes | 8 minutes
+25th percentile | 2 hours    | 43 minutes | 50 minutes
+median          | 16 hours   | 8 hours    | 9 hours
+mean            | 2.1 months | 3.3 weeks  | 1 month
+75th percentile | 1.3 weeks  | 3 days    | 3 days
+90th percentile | 4.3 months | 3.3 weeks | 1 month
 
 I propose we set an SLO of 1 week to triage issues. If all issues took as long to triage as they do
-to comment on, this would leave 27% of the 16731 open issues currently out of SLO. 23% of the 103336
+to comment on, this would leave 26% of the 16731 open issues currently out of SLO. 20% of the 94591
 issues we've ever had have violated this SLO.
 
 ## Priorities
@@ -31,9 +31,15 @@ issues, and I assume they'd mostly be labeled with `Priority: Eventually`.
 
 | | Time to close
 ---: | ---
-10th percentile | 5 hours
-25th percentile | 10 hours
-median | 1.1 weeks
-mean | 3.4 months
-75th percentile | 3.8 months
-90th percentile | 9.8 months
+10th percentile | 1 hour
+25th percentile | 17 hours
+median          | 1.1 weeks
+mean            | 3.7 months
+75th percentile | 2.3 months
+90th percentile | 11.1 months
+
+With half of all closed issues being closed in about a week, we can probably set a `Priority:
+Urgent` SLO of 1 week more than the triage SLO, so 2 weeks.
+
+If we set a `Priority: Important` of 3 months, we'll catch over half of the remaining issues, so
+that's what I suggest.

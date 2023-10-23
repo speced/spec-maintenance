@@ -72,8 +72,8 @@ const maxAge = Temporal.Duration.from({
                     >
                     <td>
                         <BugStats
-                            ageStats={globalStats.closedFirstCommentLatencyMs}
-                            description="closed commented issues"
+                            ageStats={globalStats.firstCommentLatencyMs}
+                            description="total commented issues"
                             {maxAge}
                         />
                     </td>

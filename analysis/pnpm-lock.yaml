@@ -8,6 +8,9 @@ dependencies:
   '@js-temporal/polyfill':
     specifier: ^0.4.4
     version: 0.4.4
+  simple-statistics:
+    specifier: ^7.8.3
+    version: 7.8.3
   zod:
     specifier: ^3.22.4
     version: 3.22.4
@@ -45,6 +48,10 @@ packages:
 
   /jsbi@4.3.0:
     resolution: {integrity: sha512-SnZNcinB4RIcnEyZqFPdGPVgrg2AcnykiBy0sHVJQKHYeaLUvi3Exj+iaPpLnFVkDPZIV4U0yvgC9/R4uEAZ9g==}
+    dev: false
+
+  /simple-statistics@7.8.3:
+    resolution: {integrity: sha512-JFvMY00t6SBGtwMuJ+nqgsx9ylkMiJ5JlK9bkj8AdvniIe5615wWQYkKHXe84XtSuc40G/tlrPu0A5/NlJvv8A==}
     dev: false
 
   /tslib@2.6.2:

@@ -3,7 +3,7 @@ import { paginateGraphql } from '@octokit/plugin-paginate-graphql';
 import { throttling } from '@octokit/plugin-throttling';
 import specs from 'browser-specs' assert { type: "json" };
 import fs from 'node:fs/promises';
-import { mean, quantile } from 'simple-statistics';
+import { mean, quantileSorted } from 'simple-statistics';
 import config from './third_party/config.cjs';
 
 const Octokit = OctokitCore.plugin(throttling, paginateGraphql);
@@ -89,7 +89,7 @@ nodes {
       }
     }
   }
-  reviewThreads(first: 10) {
+  reviewThreads(first: 5) {
     nodes {
       comments(first: 1) {
         nodes {
@@ -110,7 +110,7 @@ async function getIssues(org, repo): Promise<any[]> {
         issues(first: 50) {
           ${issueQueryContent}
         }
-        pullRequests(first: 50) {
+        pullRequests(first: 40) {
           ${prQueryContent}
         }
       }
@@ -139,7 +139,7 @@ async function getIssues(org, repo): Promise<any[]> {
     const remainingPRs = await octokit.graphql.paginate(
       `query ($owner: String!, $repoName: String!, $cursor: String!) {
         repository(owner: $owner, name: $repoName) {
-          pullRequests(first: 100, after: $cursor) {
+          pullRequests(first: 50, after: $cursor) {
             ${prQueryContent}
           }
         }
@@ -215,10 +215,10 @@ function ageStats(arr: number[]): AgeStats | undefined {
     count: arr.length,
     mean: mean(arr),
   }
-  const percentiles = [10, 25, 50, 75, 90];
-  quantile(arr, percentiles.map(p => p / 100)).forEach((q, i) => {
-    result[percentiles[i]] = q;
-  });
+  arr.sort((a, b) => a - b);
+  for (const percentile of [10, 25, 50, 75, 90]) {
+    result[percentile] = quantileSorted(arr, percentile / 100);
+  }
   return result;
 }
 
@@ -235,7 +235,7 @@ async function analyzeRepo(org: string, repo: string, globalStats: GlobalStatsIn
   } catch {
     // On error, fetch the body.
   }
-  if (!result || now - result.cachedAt > 5 * 60 * 60 * 1000) {
+  if (!result || now - result.cachedAt > 24 * 60 * 60 * 1000) {
     result = {
       cachedAt: now,
       org, repo,
@@ -250,19 +250,19 @@ async function analyzeRepo(org: string, repo: string, globalStats: GlobalStatsIn
         title: issue.title,
         author: issue.author?.login,
         created_at,
-        ageMs: now - created_at.getTime(),
+        ageMs: result!.cachedAt - created_at.getTime(),
         labels: issue.labels.nodes.map(label => label.name),
       };
       if (issue.closedAt) {
         info.closed_at = new Date(issue.closedAt);
         info.ageMs = info.closed_at.getTime() - info.created_at.getTime();
       }
-      if (issue.isDraft) {
+      if ('isDraft' in issue) {
         info.pull_request = { draft: issue.isDraft }
       }
       const commentTimes = issue.comments.nodes.concat(
         issue.reviews?.nodes, issue.reviewThreads?.nodes?.comments?.nodes)
-        .filter(e=>e!=null).flatMap(comment => {
+        .filter(e => e != null).flatMap(comment => {
           if (comment.author?.login === issue.author?.login) {
             // Ignore authors replying to themselves.
             return [];

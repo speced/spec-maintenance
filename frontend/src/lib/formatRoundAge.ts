@@ -10,10 +10,10 @@ import type { Temporal } from '@js-temporal/polyfill';
  */
 export function formatRoundAge(age: Temporal.Duration): string {
     const totalDays = age.total('day');
-    if (totalDays > 336) {
+    if (totalDays > 365) {
         const roundYears = Math.round(totalDays / 365.24 * 10) / 10;
         return `${roundYears} year${roundYears === 1 ? '' : 's'}`;
-    } else if (totalDays > 28) {
+    } else if (totalDays > 30) {
         const roundMonths = Math.round(totalDays / 30.4 * 10) / 10;
         return `${roundMonths} month${roundMonths === 1 ? '' : 's'}`;
     } else if (totalDays > 6) {
