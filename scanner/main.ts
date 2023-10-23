@@ -13,8 +13,8 @@ function onRateLimit(limitName: string) {
       `${limitName} exceeded for request ${JSON.stringify(options)}`,
     );
 
-    if (retryCount < 1) {
-      // Retry once.
+    if (retryCount < 2) {
+      // Retry twice, just in case the client and server times differ.
       console.info(`Retrying after ${retryAfter} seconds.`);
       return true;
     }
