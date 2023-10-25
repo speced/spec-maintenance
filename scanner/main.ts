@@ -44,6 +44,7 @@ const unlabeledFragment = gql(`fragment unlabeledFragment on UnlabeledEvent {
   }
 }`)
 const issueFragment = gql(`fragment issueFragment on IssueConnection {
+  totalCount
   pageInfo {
     endCursor
     hasNextPage
@@ -51,6 +52,7 @@ const issueFragment = gql(`fragment issueFragment on IssueConnection {
   nodes {
     __typename
     id
+    number
     title
     url
     createdAt
@@ -58,11 +60,13 @@ const issueFragment = gql(`fragment issueFragment on IssueConnection {
       login
     }
     labels(first: 100) {
+      totalCount
       nodes {
         name
       }
     }
     timelineItems(first:100, itemTypes:[LABELED_EVENT, UNLABELED_EVENT, CLOSED_EVENT, REOPENED_EVENT]){
+      totalCount
       pageInfo {
         hasNextPage
         endCursor
@@ -82,6 +86,7 @@ const issueFragment = gql(`fragment issueFragment on IssueConnection {
   }
 }`);
 const prFragment = gql(`fragment prFragment on PullRequestConnection {
+  totalCount
   pageInfo {
     endCursor
     hasNextPage
@@ -89,6 +94,7 @@ const prFragment = gql(`fragment prFragment on PullRequestConnection {
   nodes {
     __typename
     id
+    number
     title
     url
     createdAt
@@ -97,11 +103,13 @@ const prFragment = gql(`fragment prFragment on PullRequestConnection {
       login
     }
     labels(first: 100) {
+      totalCount
       nodes {
         name
       }
     }
     timelineItems(first:100, itemTypes:[READY_FOR_REVIEW_EVENT, CONVERT_TO_DRAFT_EVENT, LABELED_EVENT, UNLABELED_EVENT, CLOSED_EVENT, REOPENED_EVENT]){
+      totalCount
       pageInfo {
         hasNextPage
         endCursor
@@ -127,13 +135,15 @@ const prFragment = gql(`fragment prFragment on PullRequestConnection {
   }
 }`);
 
-async function fetchAllComments(issue: any) {
+async function fetchAllComments(issue: any): Promise<{totalComments: number}> {
+  console.log(`Paging through comments on issue ${issue.number}; id ${issue.id}.`);
   const result: any = await octokit.graphql.paginate(
     gql(`query ($id: ID!, $cursor: String) {
       node(id: $id) {
         __typename
         ... on Issue {
           timelineItems(first: 100, after: $cursor, itemTypes: [ISSUE_COMMENT]) {
+            totalCount
             pageInfo {
               endCursor
               hasNextPage
@@ -145,7 +155,8 @@ async function fetchAllComments(issue: any) {
           }
         }
         ... on PullRequest {
-          timelineItems(first: 100, after: $cursor, itemTypes: [ISSUE_COMMENT, PULL_REQUEST_REVIEW, PULL_REQUEST_REVIEW_THREAD, ]) {
+          timelineItems(first: 100, after: $cursor, itemTypes: [ISSUE_COMMENT, PULL_REQUEST_REVIEW, PULL_REQUEST_REVIEW_THREAD]) {
+            totalCount
             pageInfo {
               endCursor
               hasNextPage
@@ -174,22 +185,25 @@ async function fetchAllComments(issue: any) {
     {
       id: issue.id,
     });
-  issue.timelineItems.nodes.push(...result.node.timelineItems.nodes);
-  issue.timelineItems.nodes.forEach(timelineItem => {
+  for (const timelineItem of result.node.timelineItems.nodes) {
     if (timelineItem.__typename === 'PullRequestReviewThread') {
       timelineItem.createdAt = timelineItem.comments.nodes[0]?.createdAt;
       timelineItem.author = timelineItem.comments.nodes[0]?.author;
     }
-  });
+  }
+  issue.timelineItems.nodes.push(...result.node.timelineItems.nodes);
   issue.timelineItems.nodes.sort((a, b) =>
     new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  return {totalComments: result.node.timelineItems.totalCount};
 }
 
 async function getRepo(org, repo): Promise<any> {
+  console.log(`Fetching ${org}/${repo}.`);
   const result: any = await octokit.graphql(
     gql(`query ($owner: String!, $repoName: String!) {
       repository(owner: $owner, name: $repoName) {
         labels(first: 100, query: "Priority") {
+          totalCount
           nodes {
             name
           }
@@ -212,6 +226,7 @@ async function getRepo(org, repo): Promise<any> {
     });
 
   if (result.repository.issues.pageInfo.hasNextPage) {
+    console.log(`Paging through issues on ${org}/${repo}.`);
     const remainingIssues = await octokit.graphql.paginate(
       gql(`query ($owner: String!, $repoName: String!, $cursor: String) {
         repository(owner: $owner, name: $repoName) {
@@ -230,6 +245,7 @@ async function getRepo(org, repo): Promise<any> {
     result.repository.issues.nodes.push(...remainingIssues.repository.issues.nodes);
   }
   if (result.repository.pullRequests.pageInfo.hasNextPage) {
+    console.log(`Paging through PRs on ${org}/${repo}.`);
     const remainingPRs = await octokit.graphql.paginate(
       gql(`query ($owner: String!, $repoName: String!, $cursor: String) {
         repository(owner: $owner, name: $repoName) {
@@ -275,12 +291,11 @@ interface IssueSummary {
   pull_request?: { draft: boolean };
   labels: string[];
   firstCommentLatencyMs?: number;
-};
-
-interface AgeStats {
-  count: number;
-  mean: number;
-  [percentile: string]: number;
+  stats: {
+    numTimelineItems: number;
+    numComments?: number;
+    numLabels: number;
+  };
 };
 
 interface RepoSummary {
@@ -289,11 +304,11 @@ interface RepoSummary {
   repo: string;
   issues: IssueSummary[];
   labelsPresent: boolean;
-  ageAtCloseMs?: AgeStats;
-  openAgeMs?: AgeStats;
-  firstCommentLatencyMs?: AgeStats;
-  openFirstCommentLatencyMs?: AgeStats;
-  closedFirstCommentLatencyMs?: AgeStats;
+  stats: {
+    numLabels: number;
+    numIssues: number;
+    numPRs: number;
+  };
 }
 
 interface GlobalStatsInput {
@@ -398,16 +413,21 @@ async function analyzeRepo(org: string, repoName: string, globalStats: GlobalSta
     // On error, fetch the body.
   }
   if (!result || now - result.cachedAt > 24 * 60 * 60 * 1000) {
+    const repo = await getRepo(org, repoName);
+
     result = {
       cachedAt: now,
       org, repo: repoName,
       issues: [],
-      labelsPresent: false
+      labelsPresent: hasLabels(repo),
+      stats: {
+        numLabels: repo.labels.totalCount,
+        numIssues: repo.issues.totalCount,
+        numPRs: repo.pullRequests.totalCount,
+      }
     };
 
-    const repo = await getRepo(org, repoName);
-    result.labelsPresent = hasLabels(repo);
-    result.issues = await Promise.all(repo.issues.nodes.concat(repo.pullRequests.nodes).map(async issue => {
+    for (const issue of repo.issues.nodes.concat(repo.pullRequests.nodes)) {
       const info: IssueSummary = {
         url: issue.url,
         title: issue.title,
@@ -416,18 +436,23 @@ async function analyzeRepo(org: string, repoName: string, globalStats: GlobalSta
         sloTimeUsedMs: 0,
         whichSlo: whichSlo(issue),
         labels: issue.labels.nodes.map(label => label.name),
+        stats: {
+          numTimelineItems: issue.timelineItems.totalCount,
+          numLabels: issue.labels.totalCount,
+        }
       };
       if (issue.__typename === 'PullRequest') {
         info.pull_request = { draft: issue.isDraft };
       }
-      if (!result!.labelsPresent ||
+      if (!result.labelsPresent ||
         issue.timelineItems.nodes.some(item =>
           item.__typename === 'LabeledEvent' && item.label.name === NEEDS_REPORTER_FEEDBACK)) {
         // When it's just that the labels aren't present, we could get away with fetching fewer than
         // all comments, but this is simpler code.
-        await fetchAllComments(issue);
+        const {totalComments} = await fetchAllComments(issue);
+        info.stats.numComments = totalComments;
       }
-      if (!result!.labelsPresent && issue.timelineItems.nodes.some(timelineItem =>
+      if (!result.labelsPresent && issue.timelineItems.nodes.some(timelineItem =>
         ['IssueComment', 'PullRequestReview', 'PullRequestReviewThread'].includes(timelineItem.__typename)
         && info.author !== timelineItem.author?.login
       )) {
@@ -436,8 +461,8 @@ async function analyzeRepo(org: string, repoName: string, globalStats: GlobalSta
         info.whichSlo = "none";
       }
       info.sloTimeUsedMs = countSloTime(issue, new Date(now));
-      return info;
-    }));
+      result.issues.push(info);
+    };
   }
 
   await fs.mkdir(`${config.outDir}/${org}`, { recursive: true });
