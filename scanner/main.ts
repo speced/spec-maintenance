@@ -3,7 +3,6 @@ import { paginateGraphql } from '@octokit/plugin-paginate-graphql';
 import { throttling } from '@octokit/plugin-throttling';
 import specs from 'browser-specs' assert { type: "json" };
 import fs from 'node:fs/promises';
-import { mean, quantileSorted } from 'simple-statistics';
 import config from './third_party/config.cjs';
 
 const Octokit = OctokitCore.plugin(throttling, paginateGraphql);
@@ -29,92 +28,184 @@ const octokit = new Octokit({
   },
 });
 
-const issueQueryContent = `pageInfo {
-  endCursor
-  hasNextPage
-}
-nodes {
-  title
-  url
+/** Enables syntax highlighting from the GraphQL editor extension. */
+function gql(str: string) { return str; }
+
+const labeledFragment = gql(`fragment labeledFragment on LabeledEvent {
   createdAt
-  closedAt
-  author {
-    login
+  label {
+    name
   }
-  labels(first: 100) {
-    nodes {
-      name
-    }
-  }
-  comments(first: 5) {
-    nodes {
-      publishedAt
-      author {
-        login
-      }
-    }
-  }
-}`;
-const prQueryContent = `pageInfo {
-  endCursor
-  hasNextPage
-}
-nodes {
-  title
-  url
+}`)
+const unlabeledFragment = gql(`fragment unlabeledFragment on UnlabeledEvent {
   createdAt
-  closedAt
-  isDraft
-  author {
-    login
+  label {
+    name
   }
-  labels(first: 100) {
-    nodes {
-      name
+}`)
+const issueFragment = gql(`fragment issueFragment on IssueConnection {
+  pageInfo {
+    endCursor
+    hasNextPage
+  }
+  nodes {
+    __typename
+    id
+    title
+    url
+    createdAt
+    author {
+      login
     }
-  }
-  comments(first: 5) {
-    nodes {
-      publishedAt
-      author {
-        login
+    labels(first: 100) {
+      nodes {
+        name
+      }
+    }
+    timelineItems(first:100, itemTypes:[LABELED_EVENT, UNLABELED_EVENT, CLOSED_EVENT, REOPENED_EVENT]){
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        __typename
+        ... on ClosedEvent {
+          createdAt
+        }
+        ... on ReopenedEvent {
+          createdAt
+        }
+        ...labeledFragment
+        ...unlabeledFragment
       }
     }
   }
-  reviews(first: 5) {
-    nodes {
-      publishedAt
-      author {
-        login
+}`);
+const prFragment = gql(`fragment prFragment on PullRequestConnection {
+  pageInfo {
+    endCursor
+    hasNextPage
+  }
+  nodes {
+    __typename
+    id
+    title
+    url
+    createdAt
+    isDraft
+    author {
+      login
+    }
+    labels(first: 100) {
+      nodes {
+        name
+      }
+    }
+    timelineItems(first:100, itemTypes:[READY_FOR_REVIEW_EVENT, CONVERT_TO_DRAFT_EVENT, LABELED_EVENT, UNLABELED_EVENT, CLOSED_EVENT, REOPENED_EVENT]){
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        __typename
+        ... on ReadyForReviewEvent {
+          createdAt
+        }
+        ... on ConvertToDraftEvent {
+          createdAt
+        }
+        ... on ClosedEvent {
+          createdAt
+        }
+        ... on ReopenedEvent {
+          createdAt
+        }
+        ...labeledFragment
+        ...unlabeledFragment
       }
     }
   }
-  reviewThreads(first: 5) {
-    nodes {
-      comments(first: 1) {
-        nodes {
-          publishedAt
-          author {
-            login
+}`);
+
+async function fetchAllComments(issue: any) {
+  const result: any = await octokit.graphql.paginate(
+    gql(`query ($id: ID!, $cursor: String) {
+      node(id: $id) {
+        __typename
+        ... on Issue {
+          timelineItems(first: 100, after: $cursor, itemTypes: [ISSUE_COMMENT]) {
+            pageInfo {
+              endCursor
+              hasNextPage
+            }
+            nodes {
+              __typename
+              ...commentFields
+            }
+          }
+        }
+        ... on PullRequest {
+          timelineItems(first: 100, after: $cursor, itemTypes: [ISSUE_COMMENT, PULL_REQUEST_REVIEW, PULL_REQUEST_REVIEW_THREAD, ]) {
+            pageInfo {
+              endCursor
+              hasNextPage
+            }
+            nodes {
+              __typename
+              ...commentFields
+              ... on PullRequestReviewThread {
+                comments(first: 1) {
+                  nodes {
+                    ...commentFields
+                  }
+                }
+              }
+            }
           }
         }
       }
     }
-  }
-}`;
+    fragment commentFields on Comment {
+      createdAt
+      author {
+        login
+      }
+    }`),
+    {
+      id: issue.id,
+    });
+  issue.timelineItems.nodes.push(...result.node.timelineItems.nodes);
+  issue.timelineItems.nodes.forEach(timelineItem => {
+    if (timelineItem.__typename === 'PullRequestReviewThread') {
+      timelineItem.createdAt = timelineItem.comments.nodes[0]?.createdAt;
+      timelineItem.author = timelineItem.comments.nodes[0]?.author;
+    }
+  });
+  issue.timelineItems.nodes.sort((a, b) =>
+    new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+}
 
-async function getIssues(org, repo): Promise<any[]> {
+async function getRepo(org, repo): Promise<any> {
   const result: any = await octokit.graphql(
-    `query ($owner: String!, $repoName: String!) {
+    gql(`query ($owner: String!, $repoName: String!) {
       repository(owner: $owner, name: $repoName) {
-        issues(first: 50) {
-          ${issueQueryContent}
+        labels(first: 100, query: "Priority") {
+          nodes {
+            name
+          }
         }
-        pullRequests(first: 40) {
-          ${prQueryContent}
+        issues(first: 50, states: [OPEN]) {
+          ...issueFragment
+        }
+        pullRequests(first: 40, states: [OPEN]) {
+          ...prFragment
         }
       }
-    }`,
+    }
+    ${issueFragment}
+    ${prFragment}
+    ${labeledFragment}
+    ${unlabeledFragment}`),
     {
       owner: org,
       repoName: repo,
@@ -122,13 +213,16 @@ async function getIssues(org, repo): Promise<any[]> {
 
   if (result.repository.issues.pageInfo.hasNextPage) {
     const remainingIssues = await octokit.graphql.paginate(
-      `query ($owner: String!, $repoName: String!, $cursor: String!) {
+      gql(`query ($owner: String!, $repoName: String!, $cursor: String) {
         repository(owner: $owner, name: $repoName) {
           issues(first: 100, after: $cursor) {
-            ${issueQueryContent}
+            ...issueFragment
           }
         }
-      }`, {
+      }
+      ${issueFragment}
+      ${labeledFragment}
+      ${unlabeledFragment}`), {
       owner: org,
       repoName: repo,
       cursor: result.repository.issues.pageInfo.endCursor
@@ -137,42 +231,47 @@ async function getIssues(org, repo): Promise<any[]> {
   }
   if (result.repository.pullRequests.pageInfo.hasNextPage) {
     const remainingPRs = await octokit.graphql.paginate(
-      `query ($owner: String!, $repoName: String!, $cursor: String!) {
+      gql(`query ($owner: String!, $repoName: String!, $cursor: String) {
         repository(owner: $owner, name: $repoName) {
           pullRequests(first: 50, after: $cursor) {
-            ${prQueryContent}
+            ...prFragment
           }
         }
-      }`, {
+      }
+      ${prFragment}
+      ${labeledFragment}
+      ${unlabeledFragment}`), {
       owner: org,
       repoName: repo,
       cursor: result.repository.pullRequests.pageInfo.endCursor
     })
     result.repository.pullRequests.nodes.push(...remainingPRs.repository.pullRequests.nodes);
   }
-  return result.repository.issues.nodes.concat(result.repository.pullRequests.nodes);
+  return result.repository;
 }
 
 async function logRateLimit() {
   console.log(await octokit.graphql(
-    `query {
+    gql(`query {
       rateLimit {
         limit
         remaining
         resetAt
       }
-    }`));
+    }`)));
 }
 
 const now = Date.now();
+
+type SloType = "triage" | "urgent" | "important" | "none";
 
 interface IssueSummary {
   url: string;
   title: string;
   author?: string;
-  created_at: Date;
-  closed_at?: Date;
-  ageMs: number;
+  createdAt: string;
+  sloTimeUsedMs: number;
+  whichSlo: SloType;
   pull_request?: { draft: boolean };
   labels: string[];
   firstCommentLatencyMs?: number;
@@ -200,127 +299,152 @@ interface RepoSummary {
 interface GlobalStatsInput {
   totalRepos: number,
   reposFinished: number;
-  closeAgesMs: number[];
-  openAgesMs: number[];
-  firstCommentLatencyMs: number[];
-  openFirstCommentLatencyMs: number[];
-  closedFirstCommentLatencyMs: number[];
 }
 
-function ageStats(arr: number[]): AgeStats | undefined {
-  if (arr.length === 0) {
-    return undefined;
-  }
-  const result = {
-    count: arr.length,
-    mean: mean(arr),
-  }
-  arr.sort((a, b) => a - b);
-  for (const percentile of [10, 25, 50, 75, 90]) {
-    result[percentile] = quantileSorted(arr, percentile / 100);
-  }
-  return result;
+export const PRIORITY_URGENT = "Priority: Urgent";
+export const PRIORITY_IMPORTANT = "Priority: Important";
+export const PRIORITY_EVENTUALLY = "Priority: Eventually";
+export const NEEDS_REPORTER_FEEDBACK = "Needs Reporter Feedback";
+
+function hasLabels(repo: any): boolean {
+  return [PRIORITY_URGENT, PRIORITY_IMPORTANT, PRIORITY_EVENTUALLY].every(label =>
+    repo.labels.nodes.some(labelNode => labelNode.name === label))
 }
 
-async function analyzeRepo(org: string, repo: string, globalStats: GlobalStatsInput): Promise<RepoSummary> {
+function whichSlo(issue): SloType {
+  const labels: string[] = issue.labels.nodes.map(label => label.name);
+  if (issue.isDraft || labels.includes(PRIORITY_EVENTUALLY) || labels.includes(NEEDS_REPORTER_FEEDBACK)) {
+    return "none";
+  }
+  if (labels.includes(PRIORITY_URGENT)) {
+    return "urgent";
+  }
+  if (labels.includes(PRIORITY_IMPORTANT)) {
+    return "important";
+  }
+  return "triage";
+}
+
+function countSloTime(issue, now: Date): number {
+  let timeUsed = 0;
+  type PauseReason = "draft" | "need-feedback" | "closed";
+  let pauseReason = new Set<PauseReason>();
+  let draftChanged = false;
+  let sloStartTime = new Date(issue.createdAt);
+
+  for (const timelineItem of issue.timelineItems.nodes) {
+    function pause(reason: PauseReason) {
+      if (pauseReason.size === 0) {
+        timeUsed += new Date(timelineItem.createdAt).getTime() - sloStartTime.getTime();
+      }
+      pauseReason.add(reason);
+    }
+    function unpause(reason: PauseReason) {
+      const deleted = pauseReason.delete(reason);
+      if (pauseReason.size === 0 && deleted) {
+        sloStartTime = new Date(timelineItem.createdAt);
+      }
+    }
+    switch (timelineItem.__typename) {
+      case 'ReadyForReviewEvent':
+        if (!draftChanged) {
+          // If the first change in draft status is to become ready for review, then the SLO must
+          // have been paused for all previous events.
+          timeUsed = 0;
+          draftChanged = true;
+        }
+        unpause("draft");
+        break;
+      case 'ConvertToDraftEvent':
+        draftChanged = true;
+        pause("draft");
+        break;
+      case 'LabeledEvent':
+        if (timelineItem.label.name === NEEDS_REPORTER_FEEDBACK) {
+          pause("need-feedback");
+        }
+        break;
+      case 'UnlabeledEvent':
+        if (timelineItem.label.name === NEEDS_REPORTER_FEEDBACK) {
+          unpause("need-feedback");
+        }
+        break;
+      case 'ClosedEvent':
+        pause("closed");
+        break;
+      case 'ReopenedEvent':
+        unpause("closed");
+        break;
+      case 'IssueComment':
+      case 'PullRequestReview':
+      case 'PullRequestReviewThread':
+        if (timelineItem.author?.login !== issue.author?.login) {
+          unpause("need-feedback");
+        }
+        break;
+    }
+  }
+  if (pauseReason.size === 0) {
+    timeUsed += now.getTime() - sloStartTime.getTime();
+  }
+  return timeUsed;
+}
+
+async function analyzeRepo(org: string, repoName: string, globalStats: GlobalStatsInput): Promise<RepoSummary> {
   let result: RepoSummary | null = null;
   try {
-    result = JSON.parse(await fs.readFile(`${config.outDir}/${org}/${repo}.json`, { encoding: 'utf8' }),
-      (key, value) => {
-        if (['created_at', 'closed_at'].includes(key)) {
-          return new Date(value);
-        }
-        return value;
-      });
+    result = JSON.parse(await fs.readFile(`${config.outDir}/${org}/${repoName}.json`, { encoding: 'utf8' }));
   } catch {
     // On error, fetch the body.
   }
   if (!result || now - result.cachedAt > 24 * 60 * 60 * 1000) {
     result = {
       cachedAt: now,
-      org, repo,
+      org, repo: repoName,
       issues: [],
       labelsPresent: false
     };
 
-    result.issues = (await getIssues(org, repo)).map(issue => {
-      const created_at = new Date(issue.createdAt);
+    const repo = await getRepo(org, repoName);
+    result.labelsPresent = hasLabels(repo);
+    result.issues = await Promise.all(repo.issues.nodes.concat(repo.pullRequests.nodes).map(async issue => {
       const info: IssueSummary = {
         url: issue.url,
         title: issue.title,
         author: issue.author?.login,
-        created_at,
-        ageMs: result!.cachedAt - created_at.getTime(),
+        createdAt: issue.createdAt,
+        sloTimeUsedMs: 0,
+        whichSlo: whichSlo(issue),
         labels: issue.labels.nodes.map(label => label.name),
       };
-      if (issue.closedAt) {
-        info.closed_at = new Date(issue.closedAt);
-        info.ageMs = info.closed_at.getTime() - info.created_at.getTime();
+      if (issue.__typename === 'PullRequest') {
+        info.pull_request = { draft: issue.isDraft };
       }
-      if ('isDraft' in issue) {
-        info.pull_request = { draft: issue.isDraft }
+      if (!result!.labelsPresent ||
+        issue.timelineItems.nodes.some(item =>
+          item.__typename === 'LabeledEvent' && item.label.name === NEEDS_REPORTER_FEEDBACK)) {
+        // When it's just that the labels aren't present, we could get away with fetching fewer than
+        // all comments, but this is simpler code.
+        await fetchAllComments(issue);
       }
-      const commentTimes = issue.comments.nodes.concat(
-        issue.reviews?.nodes, issue.reviewThreads?.nodes?.comments?.nodes)
-        .filter(e => e != null).flatMap(comment => {
-          if (comment.author?.login === issue.author?.login) {
-            // Ignore authors replying to themselves.
-            return [];
-          }
-          return new Date(comment.publishedAt).getTime();
-        });
-      if (commentTimes.length > 0) {
-        info.firstCommentLatencyMs = Math.min(...commentTimes) - info.created_at.getTime();
+      if (!result!.labelsPresent && issue.timelineItems.nodes.some(timelineItem =>
+        ['IssueComment', 'PullRequestReview', 'PullRequestReviewThread'].includes(timelineItem.__typename)
+        && info.author !== timelineItem.author?.login
+      )) {
+        // If the repository doesn't have the triage labels, and an issue or PR has a comment from
+        // someone other than its creator, assume that person has also triaged the issue.
+        info.whichSlo = "none";
       }
+      info.sloTimeUsedMs = countSloTime(issue, new Date(now));
       return info;
-    });
+    }));
   }
-
-  const closeAgesMs: number[] = [];
-  const openAgesMs: number[] = [];
-  const firstCommentLatencyMs: number[] = [];
-  const closedFirstCommentLatencyMs: number[] = [];
-  const openFirstCommentLatencyMs: number[] = [];
-  for (const issue of result.issues) {
-    if (issue.closed_at) {
-      if (issue.pull_request && !issue.firstCommentLatencyMs) {
-        // Pull requests that are closed with no comments by anyone other than their author, are
-        // usually maintainers just developing in public. This style of development doesn't really
-        // have anything for an SLO to apply to, so I'll ignore this kind of PR.
-
-        // Issues like this are similar, except they might inspire a pull request, which I'm not
-        // analyzing yet, so I'll keep them around.
-        continue;
-      }
-      closeAgesMs.push(issue.closed_at.valueOf() - issue.created_at.valueOf());
-      if (issue.firstCommentLatencyMs) {
-        firstCommentLatencyMs.push(issue.firstCommentLatencyMs);
-        closedFirstCommentLatencyMs.push(issue.firstCommentLatencyMs);
-      }
-    } else {
-      openAgesMs.push(result.cachedAt - issue.created_at.valueOf());
-      if (issue.firstCommentLatencyMs) {
-        firstCommentLatencyMs.push(issue.firstCommentLatencyMs);
-        openFirstCommentLatencyMs.push(issue.firstCommentLatencyMs);
-      }
-    }
-  }
-  result.ageAtCloseMs = ageStats(closeAgesMs);
-  result.openAgeMs = ageStats(openAgesMs);
-  result.firstCommentLatencyMs = ageStats(firstCommentLatencyMs);
-  result.closedFirstCommentLatencyMs = ageStats(closedFirstCommentLatencyMs);
-  result.openFirstCommentLatencyMs = ageStats(openFirstCommentLatencyMs);
-  globalStats.closeAgesMs.push(...closeAgesMs);
-  globalStats.openAgesMs.push(...openAgesMs);
-  globalStats.firstCommentLatencyMs.push(...firstCommentLatencyMs);
-  globalStats.closedFirstCommentLatencyMs.push(...closedFirstCommentLatencyMs);
-  globalStats.openFirstCommentLatencyMs.push(...openFirstCommentLatencyMs);
 
   await fs.mkdir(`${config.outDir}/${org}`, { recursive: true });
-  await fs.writeFile(`${config.outDir}/${org}/${repo}.json`, JSON.stringify(result, undefined, 2));
+  await fs.writeFile(`${config.outDir}/${org}/${repoName}.json`, JSON.stringify(result, undefined, 2));
 
   globalStats.reposFinished++;
-  console.log(`[${globalStats.reposFinished}/${globalStats.totalRepos} ${new Date().toISOString()}] ${org}/${repo}`);
+  console.log(`[${globalStats.reposFinished}/${globalStats.totalRepos} ${new Date().toISOString()}] ${org}/${repoName}`);
 
   return result;
 }
@@ -353,20 +477,10 @@ async function main() {
   const globalStats: GlobalStatsInput = {
     totalRepos: githubRepos.length,
     reposFinished: 0,
-    openAgesMs: [], closeAgesMs: [],
-    firstCommentLatencyMs: [], openFirstCommentLatencyMs: [], closedFirstCommentLatencyMs: []
   };
   for (const { org, repo } of githubRepos) {
     await analyzeRepo(org, repo, globalStats);
   }
-
-  await fs.writeFile(`${config.outDir}/global.json`, JSON.stringify({
-    ageAtCloseMs: ageStats(globalStats.closeAgesMs),
-    openAgeMs: ageStats(globalStats.openAgesMs),
-    firstCommentLatencyMs: ageStats(globalStats.firstCommentLatencyMs),
-    closedFirstCommentLatencyMs: ageStats(globalStats.closedFirstCommentLatencyMs),
-    openFirstCommentLatencyMs: ageStats(globalStats.openFirstCommentLatencyMs),
-  }, undefined, 2));
 
   logRateLimit();
 }
