@@ -1,6 +1,6 @@
 import { Temporal } from '@js-temporal/polyfill';
 import fs from 'node:fs/promises';
-import { RepoSummary } from '../frontend/src/lib/repo-summaries.js';
+import { RepoSummary, SloType } from '../frontend/src/lib/repo-summaries.js';
 
 async function main() {
     const repoSummaries: { [name: string]: RepoSummary } = {};
@@ -18,7 +18,7 @@ async function main() {
     }
 
     let totalIssues = 0;
-    let openIssues = 0;
+    let sloTypes: { [type in SloType]: number } = { "triage": 0, "none": 0, "important": 0, "urgent": 0 };
     let exceededTriageSLO = 0;
     let outOfTriageSLO = 0;
     let outOfUrgentSLO = 0;
@@ -31,54 +31,28 @@ async function main() {
     for (const repo of Object.values(repoSummaries)) {
         const scannedAt = repo.cachedAt;
         for (const issue of repo.issues) {
-            if (issue.closed_at && issue.pull_request && !issue.firstCommentLatencyMs) {
-                continue;
-            }
             totalIssues++;
-            if (!issue.closed_at) {
-                openIssues++;
-            } else {
-                if (
-                    Temporal.Duration.compare(issue.created_at.until(issue.closed_at),
-                        urgentSLO) > 0) {
-                    outOfUrgentSLO++;
-                }
-                if (
-                    Temporal.Duration.compare(issue.created_at.until(issue.closed_at),
-                        importantSLO) > 0) {
-                    outOfImportantSLO++;
-                }
+
+            sloTypes[issue.whichSlo]++;
+
+            if (issue.whichSlo === "urgent" &&
+                Temporal.Duration.compare(issue.sloTimeUsedMs, urgentSLO) > 0) {
+                outOfUrgentSLO++;
             }
-            if (issue.firstCommentLatencyMs) {
-                if (
-                    Temporal.Duration.compare({ milliseconds: issue.firstCommentLatencyMs },
-                        triageSLO) > 0) {
-                    exceededTriageSLO++;
-                }
-            } else {
-                // No comments yet.
-                if (issue.closed_at) {
-                    // Treat the time the issue was closed as the time it was triaged.
-                    if (
-                        Temporal.Duration.compare(issue.created_at.until(issue.closed_at),
-                            triageSLO) > 0) {
-                        exceededTriageSLO++;
-                    }
-                }
-                else {
-                    if (Temporal.Duration.compare(issue.created_at.until(scannedAt), triageSLO) > 0) {
-                        outOfTriageSLO++;
-                    }
-                }
+            if (issue.whichSlo === "important" &&
+                Temporal.Duration.compare(issue.sloTimeUsedMs, importantSLO) > 0) {
+                outOfImportantSLO++;
+            }
+            if (issue.whichSlo === "triage" &&
+                Temporal.Duration.compare(issue.sloTimeUsedMs, triageSLO) > 0) {
+                outOfTriageSLO++;
             }
         }
     }
 
-    const closedIssues = totalIssues - openIssues;
-    console.log(`Of ${totalIssues} total issues, ${exceededTriageSLO} ever exceeded a ${triageSLO} triage SLO.`);
-    console.log(`Of ${openIssues} open issues, ${outOfTriageSLO} are out of SLO now.`);
-    console.log(`Of ${closedIssues} closed issues, ${outOfUrgentSLO} (${(outOfUrgentSLO / closedIssues * 100).toPrecision(2)}%) exceeded the 14-day "urgent" SLO.`);
-    console.log(`Of ${closedIssues} closed issues, ${outOfImportantSLO} (${(outOfImportantSLO / closedIssues * 100).toPrecision(2)}%) exceeded the 91-day "important" SLO.`);
+    console.log(`Of ${totalIssues} total issues, ${sloTypes["none"]} (${(sloTypes["none"] / totalIssues * 100).toPrecision(2)}%) have no SLO.`);
+    console.log(`Of ${sloTypes["triage"]} issues that need triage, ${outOfTriageSLO} (${(outOfTriageSLO / sloTypes["triage"] * 100).toPrecision(2)}%) are out of SLO.`);
 }
+
 
 await main();
