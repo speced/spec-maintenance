@@ -14,15 +14,15 @@
   "dependencies": {
     "@octokit/core": "^5.0.1",
     "@octokit/plugin-paginate-graphql": "^4.0.0",
-    "@octokit/plugin-throttling": "^8.0.0",
-    "browser-specs": "^3.62.0",
+    "@octokit/plugin-throttling": "^8.1.2",
+    "browser-specs": "^3.67.0",
     "commander": "^11.1.0",
     "node-fetch": "^3.3.2",
     "simple-statistics": "^7.8.3"
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.2",
-    "@types/node": "^20.8.4",
+    "@types/node": "^20.8.9",
     "typescript": "^5.2.2"
   }
 }
