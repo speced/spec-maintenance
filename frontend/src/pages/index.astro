@@ -1,105 +1,196 @@
 ---
-import BugStats from "@components/BugStats.astro";
-import { Temporal } from "@js-temporal/polyfill";
-import { AgeStats, RepoSummary } from "@lib/repo-summaries";
-import { z } from "zod";
+import { RepoSummary } from "@lib/repo-summaries";
+import { slo } from "@lib/slo";
 import Layout from "../layouts/Layout.astro";
 
 const repos = (await Astro.glob("../../../scanner/summaries/*/*.json")).map(
     (repo) => RepoSummary.parse(repo)
 );
-const GlobalStats = z.object({
-    ageAtCloseMs: AgeStats,
-    openAgeMs: AgeStats,
-    closedFirstCommentLatencyMs: AgeStats,
-    openFirstCommentLatencyMs: AgeStats,
+
+let totalTriageViolations = 0;
+let totalUrgentViolations = 0;
+let totalImportantViolations = 0;
+let totalNeedTriage = 0;
+let totalUrgent = 0;
+let totalImportant = 0;
+let totalOther = 0;
+
+const andFormatter = new Intl.ListFormat('en', { style: 'long', type: 'conjunction' });
+
+const repoSummaries = repos.map((repo) => {
+    let triageViolations = 0;
+    let urgentViolations = 0;
+    let importantViolations = 0;
+    let needTriage = 0;
+    let urgent = 0;
+    let important = 0;
+    let other = 0;
+    for (const issue of repo.issues) {
+        const sloStatus = slo(issue);
+        switch (sloStatus.whichSlo) {
+            case "triage":
+                if (sloStatus.withinSlo) {
+                    needTriage++;
+                } else {
+                    triageViolations++;
+                }
+                break;
+            case "urgent":
+                if (sloStatus.withinSlo) {
+                    urgent++;
+                } else {
+                    urgentViolations++;
+                }
+                break;
+            case "important":
+                if (sloStatus.withinSlo) {
+                    important++;
+                } else {
+                    importantViolations++;
+                }
+                break;
+            case "none":
+                other++;
+        }
+    }
+    totalTriageViolations += triageViolations;
+    totalUrgentViolations += urgentViolations;
+    totalImportantViolations += importantViolations;
+    totalNeedTriage += needTriage;
+    totalUrgent += urgent;
+    totalImportant += important;
+    totalOther += other;
+
+    let message :string[]= [];
+    if (triageViolations > 0 || urgentViolations > 0) {
+        if (triageViolations > 0) {
+            message.push(`${triageViolations} triage SLO violations`);
+        }
+        if (urgentViolations > 0) {
+            message.push(`${urgentViolations} urgent SLO violations`);
+        }
+    } else if (importantViolations > 0) {
+        message.push(`${importantViolations} important SLO violations`);
+    } else if (needTriage > 0 || urgent > 0) {
+        if (needTriage > 0) {
+            message.push(`${needTriage} issues that need triage`);
+        }
+        if (urgent > 0) {
+            message.push(`${urgent} urgent issues`);
+        }
+    } else if (important > 0) {
+        message.push(`${important} important issues`);
+    }
+
+    return Object.assign({}, repo, {
+        triageViolations,
+        urgentViolations,
+        importantViolations,
+        needTriage,
+        urgent,
+        important,
+        other,
+        class_:
+            triageViolations > 0 || urgentViolations > 0
+                ? "error"
+                : importantViolations > 0
+                ? "warning"
+                : "",
+        message: andFormatter.format(message),
+    });
 });
-const globalStats = GlobalStats.parse(
-    (await Astro.glob("../../../scanner/summaries/global.json"))[0]
-);
-const maxAge = Temporal.Duration.from({
-    // Use the open age because it's bigger in practice.
-    seconds: Math.round(globalStats.openAgeMs[90].total("seconds") * 1.2),
-});
+
+function sortKey(summary: typeof repoSummaries[0]) : {priority: number, count: number} {
+    if (summary.triageViolations > 0 || summary.urgentViolations > 0) {
+        return {priority: 4, count: summary.triageViolations + summary.urgentViolations};
+    } else if (summary.importantViolations > 0) {
+        return {priority: 3, count: summary.importantViolations};
+    } else if (summary.needTriage > 0 || summary.urgent > 0) {
+        return {priority: 2, count: summary.needTriage + summary.urgent};
+    } else if (summary.important > 0) {
+        return {priority: 1, count: summary.important};
+    } else {
+        return {priority: 0, count: summary.other};
+    }
+}
+function compareByKey(a:typeof repoSummaries[0], b:typeof repoSummaries[0]): number {
+    const aKey = sortKey(a), bKey = sortKey(b);
+    if (aKey.priority != bKey.priority) {
+        return bKey.priority - aKey.priority;
+    }
+    return bKey.count - aKey.count;
+}
+repoSummaries.sort(compareByKey);
+
 ---
 
 <Layout title="Browser Spec Maintenance Status">
     <main>
         <h1>Browser Spec Maintenance Status</h1>
-        <table>
-            <tbody>
-                <tr>
-                    <td>{globalStats.openAgeMs.count} total open bugs</td>
-                    <td>
-                        <BugStats
-                            ageStats={globalStats.openAgeMs}
-                            description="open bugs"
-                            {maxAge}
-                        />
-                    </td>
-                </tr>
-                <tr>
-                    <td>{globalStats.ageAtCloseMs.count} total closed bugs</td>
-                    <td>
-                        <BugStats
-                            ageStats={globalStats.ageAtCloseMs}
-                            description="closed bugs"
-                            {maxAge}
-                        />
-                    </td>
-                </tr>
-                <tr>
-                    <td
-                        >{globalStats.openFirstCommentLatencyMs.count} open
-                        issues with a comment</td
-                    >
-                    <td>
-                        <BugStats
-                            ageStats={globalStats.openFirstCommentLatencyMs}
-                            description="open commented issues"
-                            {maxAge}
-                        />
-                    </td>
-                </tr>
-                <tr>
-                    <td
-                        >{globalStats.closedFirstCommentLatencyMs.count} closed
-                        issues with a comment</td
-                    >
-                    <td>
-                        <BugStats
-                            ageStats={globalStats.closedFirstCommentLatencyMs}
-                            description="closed commented issues"
-                            {maxAge}
-                        />
-                    </td>
-                </tr>
-            </tbody>
-            <tbody>
-                <tr><td></td><th>Open Bugs</th></tr>
-                {
-                    repos.map((repo) => (
-                        <tr>
-                            <td>
-                                <a href={`${repo.org}/${repo.repo}`}>
-                                    {repo.org}/{repo.repo}
-                                </a>
-                            </td>
-                            <td>
-                                {repo.openAgeMs ? (
-                                    <BugStats
-                                        ageStats={repo.openAgeMs}
-                                        description="open bugs"
-                                        {maxAge}
-                                    />
-                                ) : (
-                                    "No open bugs"
-                                )}
-                            </td>
-                        </tr>
-                    ))
-                }
-            </tbody>
-        </table>
+
+        <p>Across all browser specs, we have:</p>
+        <ul>
+            {
+                totalTriageViolations > 0 ? (
+                    <li class="error">
+                        {totalTriageViolations} issues outside of the triage SLO
+                    </li>
+                ) : null
+            }
+            {
+                totalUrgentViolations > 0 ? (
+                    <li class="error">
+                        {totalUrgentViolations} urgent issues outside of their
+                        SLO
+                    </li>
+                ) : null
+            }
+            {
+                totalImportantViolations > 0 ? (
+                    <li class="warning">
+                        {totalImportantViolations} important issues outside of
+                        their SLO
+                    </li>
+                ) : null
+            }
+            {
+                totalNeedTriage > 0 ? (
+                    <li>{totalNeedTriage} issues that need triage</li>
+                ) : null
+            }
+            {totalUrgent > 0 ? <li>{totalUrgent} urgent issues</li> : null}
+            {
+                totalImportant > 0 ? (
+                    <li>{totalImportant} important issues</li>
+                ) : null
+            }
+            {totalOther > 0 ? <li>{totalOther} other issues</li> : null}
+        </ul>
+
+        <dl>
+            {
+                repoSummaries.map((repo) => (
+                    <>
+                        <dt class={repo.class_}>
+                            <a href={`${repo.org}/${repo.repo}`}>
+                                {repo.org}/{repo.repo}
+                            </a>
+                        </dt>
+                        <dd class={repo.class_}>
+                            {repo.message}
+                        </dd>
+                    </>
+                ))
+            }
+        </dl>
     </main>
 </Layout>
+
+<style is:global>
+    .error {
+        color: red;
+    }
+    .warning {
+        color: orange;
+    }
+</style>
