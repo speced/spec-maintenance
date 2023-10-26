@@ -1,8 +1,24 @@
 ---
+import Color from "colorjs.io";
 interface Props {
-  color: string;
+    name: string;
+    color: string;
 }
-const { color } = Astro.props;
+const { name, color } = Astro.props;
+
+const darkBg =
+    Color.contrastAPCA(color, "white") + Color.contrastAPCA(color, "black") < 0;
 ---
 
-<span class="label" data-color={color}></span>
+<span class="label" style=`--bg: ${color}` class:list={{ darkBg }}>{name}</span>
+
+<style is:global>
+    .label {
+        background-color: var(--bg);
+        padding: 0 .5lh;
+        border-radius: .5lh;
+    }
+    .label.darkBg {
+        color: white;
+    }
+</style>

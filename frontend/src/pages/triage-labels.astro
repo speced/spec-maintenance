@@ -1,0 +1,36 @@
+---
+import GhLabel from "@components/GhLabel.astro";
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Triage Labels">
+    <a href="/">Back home.</a>
+    <main>
+        <p>
+            This summary relies on repository maintainers using a particular set
+            of labels to triage issues. These are:
+        </p>
+
+        <dl>
+            <dt><GhLabel name="Priority: Urgent" color="#b60205" /></dt>
+            <dd>
+                Needs to be resolved more quickly than other issues. These
+                issues and PRs are expected to be resolved within 14 days.
+            </dd>
+            <dt><GhLabel name="Priority: Important" color="#fbca04" /></dt>
+            <dd>
+                Needs to be resolved within a reasonable timeframe, but not as
+                quickly as urgent issues. These issues and PRs are expected to
+                be resolved within 3 months.
+            </dd>
+            <dt><GhLabel name="Priority: Eventually" color="#c2e0c6" /></dt>
+            <dd>Doesn't need to be resolved within a particular time limit.</dd>
+            <dt><GhLabel name="Needs Reporter Feedback" color="#5319e7" /></dt>
+            <dd>
+                The person who reported the issue needs to answer a question
+                before progress can be made. The SLO clock doesn't advance
+                between when this label is set and when the reporter replies.
+            </dd>
+        </dl>
+    </main>
+</Layout>

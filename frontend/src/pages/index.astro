@@ -15,7 +15,10 @@ let totalUrgent = 0;
 let totalImportant = 0;
 let totalOther = 0;
 
-const andFormatter = new Intl.ListFormat('en', { style: 'long', type: 'conjunction' });
+const andFormatter = new Intl.ListFormat("en", {
+    style: "long",
+    type: "conjunction",
+});
 
 const repoSummaries = repos.map((repo) => {
     let triageViolations = 0;
@@ -61,7 +64,7 @@ const repoSummaries = repos.map((repo) => {
     totalImportant += important;
     totalOther += other;
 
-    let message :string[]= [];
+    let message: string[] = [];
     if (triageViolations > 0 || urgentViolations > 0) {
         if (triageViolations > 0) {
             message.push(`${triageViolations} triage SLO violations`);
@@ -100,28 +103,37 @@ const repoSummaries = repos.map((repo) => {
     });
 });
 
-function sortKey(summary: typeof repoSummaries[0]) : {priority: number, count: number} {
+function sortKey(summary: (typeof repoSummaries)[0]): {
+    priority: number;
+    count: number;
+} {
     if (summary.triageViolations > 0 || summary.urgentViolations > 0) {
-        return {priority: 4, count: summary.triageViolations + summary.urgentViolations};
+        return {
+            priority: 4,
+            count: summary.triageViolations + summary.urgentViolations,
+        };
     } else if (summary.importantViolations > 0) {
-        return {priority: 3, count: summary.importantViolations};
+        return { priority: 3, count: summary.importantViolations };
     } else if (summary.needTriage > 0 || summary.urgent > 0) {
-        return {priority: 2, count: summary.needTriage + summary.urgent};
+        return { priority: 2, count: summary.needTriage + summary.urgent };
     } else if (summary.important > 0) {
-        return {priority: 1, count: summary.important};
+        return { priority: 1, count: summary.important };
     } else {
-        return {priority: 0, count: summary.other};
+        return { priority: 0, count: summary.other };
     }
 }
-function compareByKey(a:typeof repoSummaries[0], b:typeof repoSummaries[0]): number {
-    const aKey = sortKey(a), bKey = sortKey(b);
+function compareByKey(
+    a: (typeof repoSummaries)[0],
+    b: (typeof repoSummaries)[0]
+): number {
+    const aKey = sortKey(a),
+        bKey = sortKey(b);
     if (aKey.priority != bKey.priority) {
         return bKey.priority - aKey.priority;
     }
     return bKey.count - aKey.count;
 }
 repoSummaries.sort(compareByKey);
-
 ---
 
 <Layout title="Browser Spec Maintenance Status">
@@ -176,8 +188,14 @@ repoSummaries.sort(compareByKey);
                                 {repo.org}/{repo.repo}
                             </a>
                         </dt>
-                        <dd class={repo.class_}>
-                            {repo.message}
+                        <dd>
+                            <span class={repo.class_}>{repo.message}</span>
+                            {repo.labelsPresent ? null : (
+                                <p>
+                                    This repository is missing its{" "}
+                                    <a href="triage-labels">triage labels</a>.
+                                </p>
+                            )}
                         </dd>
                     </>
                 ))
