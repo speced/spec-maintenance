@@ -12,9 +12,11 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
+    "@js-temporal/polyfill": "^0.4.4",
     "@octokit/core": "^5.0.1",
     "@octokit/plugin-paginate-graphql": "^4.0.0",
     "@octokit/plugin-throttling": "^8.1.2",
+    "@octokit/request-error": "^5.0.1",
     "browser-specs": "^3.67.0",
     "commander": "^11.1.0",
     "node-fetch": "^3.3.2",

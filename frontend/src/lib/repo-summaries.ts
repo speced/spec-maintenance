@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const SloType = z.enum(["triage", "urgent", "important", "none"]);
 export type SloType = z.infer<typeof SloType>;
 
-const durationInMs = z.number().transform(val => Temporal.Duration.from({ milliseconds: Math.round(val) }));
+const duration = z.string().transform(val => Temporal.Duration.from(val));
 
 export const IssueSummary = z.object({
     url: z.string().url(),
@@ -12,7 +12,7 @@ export const IssueSummary = z.object({
     createdAt: z.coerce.date().transform(val => toTemporalInstant.call(val)),
     pull_request: z.object({ draft: z.boolean().default(false) }).optional(),
     labels: z.array(z.string()),
-    sloTimeUsedMs: durationInMs,
+    sloTimeUsed: duration,
     whichSlo: SloType,
     stats: z.object({
         numTimelineItems: z.number(),
@@ -23,7 +23,7 @@ export const IssueSummary = z.object({
 export type IssueSummary = z.infer<typeof IssueSummary>;
 
 export const RepoSummary = z.object({
-    cachedAt: z.number().transform(val => Temporal.Instant.fromEpochMilliseconds(val)),
+    cachedAt: z.string().transform(val => Temporal.Instant.from(val)),
     org: z.string(),
     repo: z.string(),
     issues: IssueSummary.array(),

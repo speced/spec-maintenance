@@ -36,15 +36,15 @@ async function main() {
             sloTypes[issue.whichSlo]++;
 
             if (issue.whichSlo === "urgent" &&
-                Temporal.Duration.compare(issue.sloTimeUsedMs, urgentSLO) > 0) {
+                Temporal.Duration.compare(issue.sloTimeUsed, urgentSLO) > 0) {
                 outOfUrgentSLO++;
             }
             if (issue.whichSlo === "important" &&
-                Temporal.Duration.compare(issue.sloTimeUsedMs, importantSLO) > 0) {
+                Temporal.Duration.compare(issue.sloTimeUsed, importantSLO) > 0) {
                 outOfImportantSLO++;
             }
             if (issue.whichSlo === "triage" &&
-                Temporal.Duration.compare(issue.sloTimeUsedMs, triageSLO) > 0) {
+                Temporal.Duration.compare(issue.sloTimeUsed, triageSLO) > 0) {
                 outOfTriageSLO++;
             }
         }
