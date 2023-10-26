@@ -195,7 +195,7 @@ async function fetchAllComments(needAllComments: any[], needEarlyComments: any[]
     }
   }`);
   let rateLimit: { cost: number, remaining: number | null } = { cost: 0, remaining: null };
-  let fetchAtOnce = 200;
+  let fetchAtOnce = 100;
   const numEarlyComments = needEarlyComments.length;
   while (needEarlyComments.length > 0) {
     const initial = needEarlyComments.splice(0, fetchAtOnce);
