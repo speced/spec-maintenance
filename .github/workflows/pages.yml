@@ -38,6 +38,15 @@ jobs:
           cache-dependency-path: |
             scanner/pnpm-lock.yaml
             frontend/pnpm-lock.yaml
+      - name: Restore Scan Results Cache
+        uses: actions/cache/restore@v3
+        id: cache-restore
+        with:
+          path: scanner/summaries
+          # Always replace the cache when its schema changes, but save a new version on each run.
+          key: ${{ hashFiles('frontend/src/lib/repo-summaries.ts') }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ hashFiles('frontend/src/lib/repo-summaries.ts') }}-
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v3
@@ -47,6 +56,13 @@ jobs:
       - name: Scan specification repositories
         run: pnpm scan --gh-token '${{ secrets.GITHUB_TOKEN }}'
         working-directory: scanner
+      - name: Save Scan Results Cache
+        uses: actions/cache/save@v3
+        # Save the cache even if the overall scan failed.
+        if: always()
+        with:
+          path: scanner/summaries
+          key: ${{ steps.cache-restore.outputs.cache-primary-key }}
       - name: Install frontend dependencies
         run: pnpm install
         working-directory: frontend
