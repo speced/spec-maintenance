@@ -268,7 +268,7 @@ async function getRepo(org, repo): Promise<any> {
     console.log(`Paging through issues on ${org}/${repo}.`);
     const query = gql(`query ($owner: String!, $repoName: String!, $cursor: String, $pageSize: Int!) {
         repository(owner: $owner, name: $repoName) {
-          issues(first: $pageSize, after: $cursor) {
+          issues(first: $pageSize, states: [OPEN], after: $cursor) {
             ...issueFragment
           }
         }
@@ -309,7 +309,7 @@ async function getRepo(org, repo): Promise<any> {
     const remainingPRs = await octokit.graphql.paginate(
       gql(`query ($owner: String!, $repoName: String!, $cursor: String) {
         repository(owner: $owner, name: $repoName) {
-          pullRequests(first: 50, after: $cursor) {
+          pullRequests(first: 50, states: [OPEN], after: $cursor) {
             ...prFragment
           }
         }
