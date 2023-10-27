@@ -2,7 +2,7 @@ import { RepoSummary } from '@lib/repo-summaries';
 import { groupBySlo } from '@lib/slo';
 import type { APIRoute } from 'astro';
 
-export const GET: APIRoute = async ({ params, request }) => {
+export const GET: APIRoute = async () => {
     const repos = Object.values(await import.meta.glob("../../../scanner/summaries/*/*.json", { eager: true })).map(
         (repo) => RepoSummary.parse(repo)
     );
