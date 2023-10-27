@@ -1,12 +1,37 @@
 ---
-import { Temporal } from '@js-temporal/polyfill';
-import { formatRoundAge } from '@lib/formatRoundAge';
-import type { IssueSummary } from '@lib/repo-summaries';
+import { formatRoundAge } from "@lib/formatRoundAge";
+import type { IssueSummary } from "@lib/repo-summaries";
+import { slo, sloMap } from "@lib/slo";
 
 interface Props {
     issue: IssueSummary;
 }
-const {issue} = Astro.props;
-const age = issue.created_at.until(Temporal.Now.instant());
+const { issue } = Astro.props;
+
+const { withinSlo } = slo(issue);
+
+let timeToReport = issue.sloTimeUsed;
+if (!withinSlo) {
+    if (issue.whichSlo === "none") {
+        throw new Error(
+            `Can't be out of SLO with a 'none' SLO type: ${JSON.stringify(
+                issue
+            )}`
+        );
+    }
+    timeToReport = issue.sloTimeUsed.subtract(sloMap[issue.whichSlo]);
+}
 ---
-<div><a href={issue.url}>{issue.title}</a>: open for {formatRoundAge(age)}</div>
+
+<a href={issue.url}>{issue.title}</a>: {
+    withinSlo ? "on maintainers' plate" : <span class="error">out of SLO</span>
+} for {formatRoundAge(timeToReport)}
+
+<style is:global>
+    .error {
+        color: red;
+    }
+    .warning {
+        color: orange;
+    }
+</style>

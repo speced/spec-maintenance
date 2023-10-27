@@ -7,7 +7,7 @@ const triageSLO = Temporal.Duration.from({ days: 7 });
 const urgentSLO = Temporal.Duration.from({ days: 14 });
 const importantSLO = Temporal.Duration.from({ days: 91 });
 
-const sloMap = {
+export const sloMap = {
     "urgent": urgentSLO,
     "important": importantSLO,
     "triage": triageSLO

@@ -3,11 +3,7 @@ import Issue from "@components/Issue.astro";
 import { Temporal } from "@js-temporal/polyfill";
 import Layout from "@layouts/Layout.astro";
 import { IssueSummary, RepoSummary } from "@lib/repo-summaries";
-import {
-PRIORITY_EVENTUALLY,
-PRIORITY_IMPORTANT,
-PRIORITY_URGENT,
-} from "@lib/triage";
+import { slo } from "@lib/slo";
 import type {
 GetStaticPaths,
 InferGetStaticParamsType,
@@ -33,33 +29,137 @@ const { details } = Astro.props as Props;
 const untriaged: IssueSummary[] = [];
 const urgent: IssueSummary[] = [];
 const important: IssueSummary[] = [];
+let triageViolations = 0;
+let urgentViolations = 0;
+let importantViolations = 0;
+
 for (const issue of details.issues) {
-    if (issue.closed_at) {
-        // Only list open issues.
-        continue;
-    }
-    if (issue.labels.includes(PRIORITY_URGENT)) {
-        urgent.push(issue);
-    } else if (issue.labels.includes(PRIORITY_IMPORTANT)) {
-        important.push(issue);
-    } else if (!issue.labels.includes(PRIORITY_EVENTUALLY)) {
-        untriaged.push(issue);
+    const { whichSlo, withinSlo } = slo(issue);
+    switch (whichSlo) {
+        case "urgent":
+            urgent.push(issue);
+            if (!withinSlo) {
+                urgentViolations++;
+            }
+            break;
+        case "important":
+            important.push(issue);
+            if (!withinSlo) {
+                importantViolations++;
+            }
+            break;
+        case "triage":
+            untriaged.push(issue);
+            if (!withinSlo) {
+                triageViolations++;
+            }
+
+            break;
     }
 }
 
-urgent.sort((a, b) => Temporal.Instant.compare(b.created_at, a.created_at));
-important.sort((a, b) => Temporal.Instant.compare(b.created_at, a.created_at));
-untriaged.sort((a, b) => Temporal.Instant.compare(b.created_at, a.created_at));
+function cmpByTimeUsed(a: IssueSummary, b: IssueSummary) {
+    return Temporal.Duration.compare(b.sloTimeUsed, a.sloTimeUsed);
+}
+urgent.sort(cmpByTimeUsed);
+important.sort(cmpByTimeUsed);
+untriaged.sort(cmpByTimeUsed);
 ---
 
 <Layout title={`${org}/${repo} Issues`}>
-    <h1>{org}/{repo} Issues</h1>
-    <h2>Untriaged</h2>
-    {untriaged.map((issue) => <Issue {issue} />)}
+    <h1>
+        <a href=`https://github.com/${org}/${repo}/issues`
+            >{org}/{repo} Issues</a
+        >
+    </h1>
 
-    <h2>Urgent</h2>
-    {urgent.map((issue) => <Issue {issue} />)}
+    {
+        details.labelsPresent ? null : (
+            <p>
+                This repository needs to add the{" "}
+                <a href="/triage-labels">triage labels</a>.
+            </p>
+        )
+    }
 
-    <h2>Important</h2>
-    {important.map((issue) => <Issue {issue} />)}
+    <ul>
+        {
+            untriaged.length > 0 ? (
+                <li>
+                    <a href="#untriaged">
+                        {triageViolations
+                            ? `${triageViolations} out-of-SLO untriaged issues`
+                            : `${untriaged.length} untriaged issues`}
+                    </a>
+                </li>
+            ) : null
+        }
+        {
+            urgent.length > 0 ? (
+                <li>
+                    <a href="#urgent">
+                        {urgentViolations
+                            ? `${urgentViolations} out-of-SLO urgent issues`
+                            : `${urgent.length} urgent issues`}
+                    </a>
+                </li>
+            ) : null
+        }
+        {
+            important.length > 0 ? (
+                <li>
+                    <a href="#important">
+                        {importantViolations
+                            ? `${importantViolations} out-of-SLO important issues`
+                            : `${important.length} important issues`}
+                    </a>
+                </li>
+            ) : null
+        }
+    </ul>
+
+    {
+        untriaged.length > 0 ? (
+            <>
+                <h2 id="untriaged">Untriaged</h2>
+                <ul>
+                    {untriaged.map((issue) => (
+                        <li>
+                            <Issue {issue} />
+                        </li>
+                    ))}
+                </ul>
+            </>
+        ) : null
+    }
+
+    {
+        urgent.length > 0 ? (
+            <>
+                <h2 id="urgent">Urgent</h2>
+                <ul>
+                    {urgent.map((issue) => (
+                        <li>
+                            <Issue {issue} />
+                        </li>
+                    ))}
+                </ul>
+            </>
+        ) : null
+    }
+
+    {
+        important.length > 0 ? (
+            <>
+                <h2 id="important">Important</h2>
+                <ul>
+                    {important.map((issue) => (
+                        <li>
+                            <Issue {issue} />
+                        </li>
+                    ))}
+                </ul>
+            </>
+        ) : null
+    }
 </Layout>

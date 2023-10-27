@@ -183,19 +183,19 @@ repoSummaries.sort(compareByKey);
             {
                 repoSummaries.map((repo) => (
                     <>
-                        <dt class={repo.class_}>
+                        <dt>
                             <a href={`${repo.org}/${repo.repo}`}>
                                 {repo.org}/{repo.repo}
-                            </a>
+                            </a>{" "}
+                            {repo.labelsPresent ? null : (
+                                <>
+                                    (no
+                                    <a href="triage-labels">triage labels</a>)
+                                </>
+                            )}
                         </dt>
                         <dd>
                             <span class={repo.class_}>{repo.message}</span>
-                            {repo.labelsPresent ? null : (
-                                <p>
-                                    This repository is missing its{" "}
-                                    <a href="triage-labels">triage labels</a>.
-                                </p>
-                            )}
                         </dd>
                     </>
                 ))
