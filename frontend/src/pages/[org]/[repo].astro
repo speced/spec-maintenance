@@ -1,9 +1,8 @@
 ---
 import Issue from "@components/Issue.astro";
-import { Temporal } from "@js-temporal/polyfill";
 import Layout from "@layouts/Layout.astro";
-import { IssueSummary, RepoSummary } from "@lib/repo-summaries";
-import { slo } from "@lib/slo";
+import { RepoSummary } from "@lib/repo-summaries";
+import { cmpByTimeUsed, groupBySlo } from "@lib/slo";
 import type {
 GetStaticPaths,
 InferGetStaticParamsType,
@@ -26,43 +25,19 @@ type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 const { org, repo } = Astro.params as Params;
 const { details } = Astro.props as Props;
 
-const untriaged: IssueSummary[] = [];
-const urgent: IssueSummary[] = [];
-const important: IssueSummary[] = [];
-let triageViolations = 0;
-let urgentViolations = 0;
-let importantViolations = 0;
-
-for (const issue of details.issues) {
-    const { whichSlo, withinSlo } = slo(issue);
-    switch (whichSlo) {
-        case "urgent":
-            urgent.push(issue);
-            if (!withinSlo) {
-                urgentViolations++;
-            }
-            break;
-        case "important":
-            important.push(issue);
-            if (!withinSlo) {
-                importantViolations++;
-            }
-            break;
-        case "triage":
-            untriaged.push(issue);
-            if (!withinSlo) {
-                triageViolations++;
-            }
-
-            break;
-    }
-}
-
-function cmpByTimeUsed(a: IssueSummary, b: IssueSummary) {
-    return Temporal.Duration.compare(b.sloTimeUsed, a.sloTimeUsed);
-}
+const {
+    untriaged,
+    triageViolations,
+    important,
+    importantViolations,
+    urgent,
+    urgentViolations,
+} = groupBySlo(details.issues);
+urgent.push(...urgentViolations);
 urgent.sort(cmpByTimeUsed);
+important.push(...importantViolations);
 important.sort(cmpByTimeUsed);
+untriaged.push(...triageViolations);
 untriaged.sort(cmpByTimeUsed);
 ---
 
@@ -87,8 +62,8 @@ untriaged.sort(cmpByTimeUsed);
             untriaged.length > 0 ? (
                 <li>
                     <a href="#untriaged">
-                        {triageViolations
-                            ? `${triageViolations} out-of-SLO untriaged issues`
+                        {triageViolations.length
+                            ? `${triageViolations.length} out-of-SLO untriaged issues`
                             : `${untriaged.length} untriaged issues`}
                     </a>
                 </li>
@@ -98,8 +73,8 @@ untriaged.sort(cmpByTimeUsed);
             urgent.length > 0 ? (
                 <li>
                     <a href="#urgent">
-                        {urgentViolations
-                            ? `${urgentViolations} out-of-SLO urgent issues`
+                        {urgentViolations.length
+                            ? `${urgentViolations.length} out-of-SLO urgent issues`
                             : `${urgent.length} urgent issues`}
                     </a>
                 </li>
@@ -109,8 +84,8 @@ untriaged.sort(cmpByTimeUsed);
             important.length > 0 ? (
                 <li>
                     <a href="#important">
-                        {importantViolations
-                            ? `${importantViolations} out-of-SLO important issues`
+                        {importantViolations.length
+                            ? `${importantViolations.length} out-of-SLO important issues`
                             : `${important.length} important issues`}
                     </a>
                 </li>

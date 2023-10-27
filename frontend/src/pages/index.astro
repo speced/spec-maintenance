@@ -1,6 +1,6 @@
 ---
 import { RepoSummary } from "@lib/repo-summaries";
-import { slo } from "@lib/slo";
+import { groupBySlo } from "@lib/slo";
 import Layout from "../layouts/Layout.astro";
 
 const repos = (await Astro.glob("../../../scanner/summaries/*/*.json")).map(
@@ -21,41 +21,16 @@ const andFormatter = new Intl.ListFormat("en", {
 });
 
 const repoSummaries = repos.map((repo) => {
-    let triageViolations = 0;
-    let urgentViolations = 0;
-    let importantViolations = 0;
-    let needTriage = 0;
-    let urgent = 0;
-    let important = 0;
-    let other = 0;
-    for (const issue of repo.issues) {
-        const sloStatus = slo(issue);
-        switch (sloStatus.whichSlo) {
-            case "triage":
-                if (sloStatus.withinSlo) {
-                    needTriage++;
-                } else {
-                    triageViolations++;
-                }
-                break;
-            case "urgent":
-                if (sloStatus.withinSlo) {
-                    urgent++;
-                } else {
-                    urgentViolations++;
-                }
-                break;
-            case "important":
-                if (sloStatus.withinSlo) {
-                    important++;
-                } else {
-                    importantViolations++;
-                }
-                break;
-            case "none":
-                other++;
-        }
-    }
+    const groups = groupBySlo(repo.issues);
+
+    const triageViolations = groups.triageViolations.length;
+    const urgentViolations = groups.urgentViolations.length;
+    const importantViolations = groups.importantViolations.length;
+    const needTriage = groups.untriaged.length;
+    const urgent = groups.urgent.length;
+    const important = groups.important.length;
+    const other = groups.other.length;
+
     totalTriageViolations += triageViolations;
     totalUrgentViolations += urgentViolations;
     totalImportantViolations += importantViolations;
