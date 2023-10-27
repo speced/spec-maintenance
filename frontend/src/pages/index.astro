@@ -1,6 +1,8 @@
 ---
+import GhLabel from "@components/GhLabel.astro";
 import { RepoSummary } from "@lib/repo-summaries";
 import { groupBySlo } from "@lib/slo";
+import * as ghLabels from "@lib/triage-labels";
 import Layout from "../layouts/Layout.astro";
 
 const repos = (await Astro.glob("../../../scanner/summaries/*/*.json")).map(
@@ -114,6 +116,29 @@ repoSummaries.sort(compareByKey);
 <Layout title="Browser Spec Maintenance Status">
     <main>
         <h1>Browser Spec Maintenance Status</h1>
+
+        <p>For now, this page sets SLOs of:</p>
+        <ul>
+            <li>
+                7 days to triage an issue. An issue counts as triaged if any of
+                the "Priority" <a href="triage-labels">triage labels</a> are
+                applied. If a repository doesn't have the
+                <a href="triage-labels">triage labels</a> created, an issue
+                counts as triaged once someone other than the original author
+                comments.
+            </li>
+            <li>14 days to close a <GhLabel {...ghLabels.urgent} /> issue.</li>
+            <li>
+                91 days to close a <GhLabel {...ghLabels.important} /> issue.
+            </li>
+        </ul>
+
+        <p>
+            This page also doesn't yet update automatically. Talk to Jeffrey or
+            <a href="https://github.com/jyasskin/spec-maintenance/issues"
+                >file an issue</a
+            > if you want to see how your triaging work affected it.
+        </p>
 
         <p>Across all browser specs, we have:</p>
         <ul>
