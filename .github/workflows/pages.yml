@@ -50,12 +50,10 @@ jobs:
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v3
-      - name: Install scanner dependencies
+      - name: Install dependencies
         run: pnpm install
-        working-directory: scanner
       - name: Scan specification repositories
         run: pnpm scan --gh-token '${{ secrets.GITHUB_TOKEN }}'
-        working-directory: scanner
       - name: Save Scan Results Cache
         uses: actions/cache/save@v3
         # Save the cache even if the overall scan failed.
@@ -63,15 +61,11 @@ jobs:
         with:
           path: scanner/summaries
           key: ${{ steps.cache-restore.outputs.cache-primary-key }}
-      - name: Install frontend dependencies
-        run: pnpm install
-        working-directory: frontend
       - name: Build with Astro
         run: |
           pnpm astro build \
             --site "${{ steps.pages.outputs.origin }}" \
             --base "${{ steps.pages.outputs.base_path }}"
-        working-directory: frontend
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
