@@ -1,21 +1,19 @@
 ---
 import Issue from "@components/Issue.astro";
 import Layout from "@layouts/Layout.astro";
-import { RepoSummary } from "@lib/repo-summaries";
 import { cmpByTimeUsed, groupBySlo } from "@lib/slo";
 import type {
 GetStaticPaths,
 InferGetStaticParamsType,
 InferGetStaticPropsType,
 } from "astro";
+import { getCollection } from "astro:content";
 
 export const getStaticPaths = (async () => {
-    const repos = RepoSummary.array().parse(
-        await Astro.glob("../../../../scanner/summaries/*/*.json")
-    );
+    const repos = await getCollection("github");
     return repos.map((repo) => ({
-        params: { org: repo.org, repo: repo.repo },
-        props: { details: repo },
+        params: { org: repo.data.org, repo: repo.data.repo },
+        props: { details: repo.data },
     }));
 }) satisfies GetStaticPaths;
 

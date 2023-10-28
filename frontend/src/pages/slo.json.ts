@@ -1,16 +1,14 @@
-import { RepoSummary } from '@lib/repo-summaries';
 import { groupBySlo } from '@lib/slo';
 import type { APIRoute } from 'astro';
+import { getCollection } from 'astro:content';
 
 export const GET: APIRoute = async () => {
-    const repos = Object.values(await import.meta.glob("../../../scanner/summaries/*/*.json", { eager: true })).map(
-        (repo) => RepoSummary.parse(repo)
-    );
+    const repos = await getCollection("github");
 
     const repoSummaries = Object.fromEntries(repos.map((repo) => {
-        const groups = groupBySlo(repo.issues);
+        const groups = groupBySlo(repo.data.issues);
 
-        return [`${repo.org}/${repo.repo}`, {
+        return [repo.id, {
             triageViolations: groups.triageViolations.length,
             urgentViolations: groups.urgentViolations.length,
             importantViolations: groups.importantViolations.length,

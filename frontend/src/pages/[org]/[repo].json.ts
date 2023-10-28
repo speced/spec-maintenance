@@ -1,18 +1,16 @@
-import { RepoSummary } from "@lib/repo-summaries";
 import { groupBySlo } from "@lib/slo";
 import type {
     APIRoute,
     GetStaticPaths,
     InferGetStaticPropsType
 } from "astro";
+import { getCollection } from "astro:content";
 
 export const getStaticPaths = (async () => {
-    const repos = RepoSummary.array().parse(
-        Object.values(await import.meta.glob("../../../../scanner/summaries/*/*.json", { eager: true }))
-    );
+    const repos = await getCollection("github")
     return repos.map((repo) => ({
-        params: { org: repo.org, repo: repo.repo },
-        props: { details: repo },
+        params: { org: repo.data.org, repo: repo.data.repo },
+        props: { details: repo.data },
     }));
 }) satisfies GetStaticPaths;
 

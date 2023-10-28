@@ -9,7 +9,7 @@
     "build": "astro --root frontend build",
     "preview": "astro --root frontend preview",
     "astro": "astro --root frontend",
-    "scan": "tsc && node build/scanner/main.js --out-dir scanner/summaries"
+    "scan": "tsc && node build/scanner/main.js --out-dir frontend/src/content/github"
   },
   "keywords": [],
   "author": "",
