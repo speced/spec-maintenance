@@ -2,11 +2,14 @@
   "name": "spec-maintenance",
   "version": "1.0.0",
   "description": "",
-  "main": "main.ts",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "scan": "tsc && node build/main.js"
+    "dev": "astro --root frontend dev",
+    "start": "astro --root frontend dev",
+    "build": "astro --root frontend build",
+    "preview": "astro --root frontend preview",
+    "astro": "astro --root frontend",
+    "scan": "tsc && node build/scanner/main.js --out-dir scanner/summaries"
   },
   "keywords": [],
   "author": "",
@@ -17,12 +20,16 @@
     "@octokit/plugin-paginate-graphql": "^4.0.0",
     "@octokit/plugin-throttling": "^8.1.2",
     "@octokit/request-error": "^5.0.1",
+    "astro": "^3.2.4",
     "browser-specs": "^3.67.0",
+    "colorjs.io": "^0.4.5",
     "commander": "^11.1.0",
     "node-fetch": "^3.3.2",
-    "simple-statistics": "^7.8.3"
+    "simple-statistics": "^7.8.3",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.2.1",
     "@tsconfig/node20": "^20.1.2",
     "@types/node": "^20.8.9",
     "typescript": "^5.2.2"

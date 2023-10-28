@@ -8,5 +8,10 @@
         "allowJs": true,
         "resolveJsonModule": true,
         "noImplicitAny": false
-    }
+    },
+    "include": [
+        "analysis/**/*",
+        "frontend/src/lib/**/*",
+        "scanner/**/*"
+    ]
 }

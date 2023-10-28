@@ -1,7 +1,7 @@
 // Defines constants and functions to check Github issue triage state.
 
 import { Temporal } from "@js-temporal/polyfill";
-import type { IssueSummary, SloType } from "./repo-summaries";
+import type { IssueSummary, SloType } from "./repo-summaries.js";
 
 const triageSLO = Temporal.Duration.from({ days: 7 });
 const urgentSLO = Temporal.Duration.from({ days: 14 });
