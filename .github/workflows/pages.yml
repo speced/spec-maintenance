@@ -35,9 +35,6 @@ jobs:
         with:
           node-version: "20"
           cache: pnpm
-          cache-dependency-path: |
-            scanner/pnpm-lock.yaml
-            frontend/pnpm-lock.yaml
       - name: Restore Scan Results Cache
         uses: actions/cache/restore@v3
         id: cache-restore
