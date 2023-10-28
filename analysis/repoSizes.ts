@@ -1,6 +1,6 @@
+import { RepoSummary } from '@lib/repo-summaries.js';
 import fs from 'node:fs/promises';
 import { quantileSorted } from 'simple-statistics';
-import { RepoSummary } from '../frontend/src/lib/repo-summaries.js';
 
 async function main() {
     const repoSummaries: { [name: string]: RepoSummary } = {};

@@ -10,6 +10,7 @@ const instant = z.string().transform(val => Temporal.Instant.from(val));
 export const IssueSummary = z.object({
     url: z.string().url(),
     title: z.string(),
+    author: z.string().optional(),
     createdAt: instant,
     pull_request: z.object({ draft: z.boolean().default(false) }).optional(),
     labels: z.array(z.string()),

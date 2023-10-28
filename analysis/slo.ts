@@ -1,6 +1,6 @@
 import { Temporal } from '@js-temporal/polyfill';
+import { RepoSummary, SloType } from '@lib/repo-summaries.js';
 import fs from 'node:fs/promises';
-import { RepoSummary, SloType } from '../frontend/src/lib/repo-summaries.js';
 
 async function main() {
     const repoSummaries: { [name: string]: RepoSummary } = {};

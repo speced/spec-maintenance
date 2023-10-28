@@ -1,4 +1,5 @@
 import { Temporal } from "@js-temporal/polyfill";
+import { IssueSummary, RepoSummary, SloType } from '@lib/repo-summaries.js';
 import { Octokit as OctokitCore } from '@octokit/core';
 import { paginateGraphql } from '@octokit/plugin-paginate-graphql';
 import { throttling } from '@octokit/plugin-throttling';
@@ -338,37 +339,6 @@ async function logRateLimit() {
 }
 
 const now = Temporal.Now.instant().round('second');
-
-type SloType = "triage" | "urgent" | "important" | "none";
-
-interface IssueSummary {
-  url: string;
-  title: string;
-  author?: string;
-  createdAt: string;
-  sloTimeUsed: Temporal.Duration;
-  whichSlo: SloType;
-  pull_request?: { draft: boolean };
-  labels: string[];
-  stats: {
-    numTimelineItems: number;
-    numComments?: number;
-    numLabels: number;
-  };
-};
-
-interface RepoSummary {
-  cachedAt: Temporal.Instant;
-  org: string;
-  repo: string;
-  issues: IssueSummary[];
-  labelsPresent: boolean;
-  stats: {
-    numLabels: number;
-    numIssues: number;
-    numPRs: number;
-  };
-}
 
 interface GlobalStatsInput {
   totalRepos: number,
