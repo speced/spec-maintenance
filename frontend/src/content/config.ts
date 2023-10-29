@@ -1,9 +1,9 @@
-import { RepoSummary } from '@lib/repo-summaries';
+import { RepoSummaryInContent } from '@lib/repo-summaries';
 import { defineCollection } from 'astro:content';
 
 const githubCollection = defineCollection({
   type: "data",
-  schema: RepoSummary,
+  schema: RepoSummaryInContent,
 });
 
 export const collections = {

@@ -1,6 +1,7 @@
 ---
 import Issue from "@components/Issue.astro";
 import Layout from "@layouts/Layout.astro";
+import { IssueSummary } from "@lib/repo-summaries";
 import { cmpByTimeUsed, groupBySlo } from "@lib/slo";
 import type {
 GetStaticPaths,
@@ -30,7 +31,7 @@ const {
     importantViolations,
     urgent,
     urgentViolations,
-} = groupBySlo(details.issues);
+} = groupBySlo(IssueSummary.array().parse(details.issues));
 urgent.push(...urgentViolations);
 urgent.sort(cmpByTimeUsed);
 important.push(...importantViolations);

@@ -4,6 +4,7 @@ import { groupBySlo } from "@lib/slo";
 import * as ghLabels from "@lib/triage-labels";
 import { getCollection } from "astro:content";
 import Layout from "../layouts/Layout.astro";
+import { IssueSummary } from "@lib/repo-summaries";
 
 const repos = await getCollection("github");
 
@@ -21,7 +22,7 @@ const andFormatter = new Intl.ListFormat("en", {
 });
 
 const repoSummaries = repos.map((repo) => {
-    const groups = groupBySlo(repo.data.issues);
+    const groups = groupBySlo(IssueSummary.array().parse(repo.data.issues));
 
     const triageViolations = groups.triageViolations.length;
     const urgentViolations = groups.urgentViolations.length;
