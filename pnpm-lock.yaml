@@ -24,8 +24,8 @@ dependencies:
     specifier: ^3.2.4
     version: 3.2.4(@types/node@20.8.9)
   browser-specs:
-    specifier: ^3.67.0
-    version: 3.67.0
+    specifier: ^3.68.0
+    version: 3.68.0
   colorjs.io:
     specifier: ^0.4.5
     version: 0.4.5
@@ -1323,8 +1323,8 @@ packages:
     dependencies:
       fill-range: 7.0.1
 
-  /browser-specs@3.67.0:
-    resolution: {integrity: sha512-GTsIx6S5wQmULkFPDQP88VgGwpABMuqsFYAXsIas4nS0wSK5dyPVyeObpwko4HcJW9LOBtZsNgaqVX/0FzdPkA==}
+  /browser-specs@3.68.0:
+    resolution: {integrity: sha512-NLoltHI4zjThWgMU+JuUZzLz8QxI5+JudrQlSCGHIuuenGq5Od87EJ3Zb5aow7V/7mN9O4SQH1RT+cPLkxKQLA==}
     dev: false
 
   /browserslist@4.22.1:

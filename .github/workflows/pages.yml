@@ -39,7 +39,7 @@ jobs:
         uses: actions/cache/restore@v3
         id: cache-restore
         with:
-          path: scanner/summaries
+          path: frontend/src/content/github
           # Always replace the cache when its schema changes, but save a new version on each run.
           key: ${{ hashFiles('frontend/src/lib/repo-summaries.ts') }}-${{ github.run_id }}
           restore-keys: |
@@ -56,7 +56,7 @@ jobs:
         # Save the cache even if the overall scan failed.
         if: always()
         with:
-          path: scanner/summaries
+          path: frontend/src/content/github
           key: ${{ steps.cache-restore.outputs.cache-primary-key }}
       - name: Build with Astro
         run: |

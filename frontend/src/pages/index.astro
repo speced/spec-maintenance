@@ -1,10 +1,10 @@
 ---
 import GhLabel from "@components/GhLabel.astro";
+import { IssueSummary } from "@lib/repo-summaries";
 import { groupBySlo } from "@lib/slo";
 import * as ghLabels from "@lib/triage-labels";
 import { getCollection } from "astro:content";
 import Layout from "../layouts/Layout.astro";
-import { IssueSummary } from "@lib/repo-summaries";
 
 const repos = await getCollection("github");
 
@@ -123,8 +123,8 @@ repoSummaries.sort(compareByKey);
                 the "Priority" <a href="triage-labels">triage labels</a> are
                 applied. If a repository doesn't have the
                 <a href="triage-labels">triage labels</a> created, an issue
-                counts as triaged once someone other than the original author
-                comments.
+                counts as triaged once it's assigned to a milestone or someone
+                other than the original author comments.
             </li>
             <li>14 days to close a <GhLabel {...ghLabels.urgent} /> issue.</li>
             <li>

@@ -20,6 +20,10 @@ export const IssueSummaryInContent = z.object({
     createdAt: checkInstant,
     pull_request: z.object({ draft: z.boolean().default(false) }).optional(),
     labels: z.array(z.string()),
+    milestone: z.object({
+        url: z.string().url(),
+        title: z.string(),
+    }).optional(),
     sloTimeUsed: checkDuration,
     whichSlo: SloType,
     stats: z.object({

@@ -68,6 +68,10 @@ const issueFragment = gql(`fragment issueFragment on IssueConnection {
         name
       }
     }
+    milestone {
+      url
+      title
+    }
     timelineItems(first:100, itemTypes:[LABELED_EVENT, UNLABELED_EVENT, CLOSED_EVENT, REOPENED_EVENT]){
       totalCount
       pageInfo {
@@ -110,6 +114,10 @@ const prFragment = gql(`fragment prFragment on PullRequestConnection {
       nodes {
         name
       }
+    }
+    milestone {
+      url
+      title
     }
     timelineItems(first:100, itemTypes:[READY_FOR_REVIEW_EVENT, CONVERT_TO_DRAFT_EVENT, LABELED_EVENT, UNLABELED_EVENT, CLOSED_EVENT, REOPENED_EVENT]){
       totalCount
@@ -470,7 +478,7 @@ async function analyzeRepo(org: string, repoName: string, globalStats: GlobalSta
       if (issue.timelineItems.nodes.some(item =>
         item.__typename === 'LabeledEvent' && item.label.name === NEEDS_REPORTER_FEEDBACK)) {
         needAllComments.push(issue);
-      } else if (!result.labelsPresent) {
+      } else if (!result.labelsPresent && !issue.milestone) {
         // We only need to see a few comments to see if someone other than the initial author has
         // commented. This'll miss if the initial author has a long conversation with themself, but
         // that should be rare.
@@ -498,10 +506,18 @@ async function analyzeRepo(org: string, repoName: string, globalStats: GlobalSta
       if (issue.__typename === 'PullRequest') {
         info.pull_request = { draft: issue.isDraft };
       }
-      if (!result.labelsPresent && issue.timelineItems.nodes.some(timelineItem =>
-        ['IssueComment', 'PullRequestReview', 'PullRequestReviewThread'].includes(timelineItem.__typename)
-        && info.author !== timelineItem.author?.login
-      )) {
+      if (issue.milestone) {
+        info.milestone = {
+          url: issue.milestone.url,
+          title: issue.milestone.title,
+        };
+      }
+      if (!result.labelsPresent && (
+        issue.milestone ||
+        issue.timelineItems.nodes.some(timelineItem =>
+          ['IssueComment', 'PullRequestReview', 'PullRequestReviewThread'].includes(timelineItem.__typename)
+          && info.author !== timelineItem.author?.login
+        ))) {
         // If the repository doesn't have the triage labels, and an issue or PR has a comment from
         // someone other than its creator, assume that person has also triaged the issue.
         info.whichSlo = "none";
