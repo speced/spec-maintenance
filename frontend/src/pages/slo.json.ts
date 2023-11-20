@@ -1,3 +1,4 @@
+import { RepoSummary } from '@lib/repo-summaries';
 import { groupBySlo } from '@lib/slo';
 import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
@@ -6,7 +7,7 @@ export const GET: APIRoute = async () => {
     const repos = await getCollection("github");
 
     const repoSummaries = Object.fromEntries(repos.map((repo) => {
-        const groups = groupBySlo(repo.data.issues);
+        const groups = groupBySlo(RepoSummary.parse(repo.data).issues);
 
         return [repo.id, {
             triageViolations: groups.triageViolations.length,

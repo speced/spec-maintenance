@@ -1,3 +1,4 @@
+import { RepoSummary } from "@lib/repo-summaries";
 import { groupBySlo } from "@lib/slo";
 import type {
     APIRoute,
@@ -10,7 +11,7 @@ export const getStaticPaths = (async () => {
     const repos = await getCollection("github")
     return repos.map((repo) => ({
         params: { org: repo.data.org, repo: repo.data.repo },
-        props: { details: repo.data },
+        props: { details: RepoSummary.parse(repo.data) },
     }));
 }) satisfies GetStaticPaths;
 
@@ -21,6 +22,7 @@ export const GET: APIRoute = ({ props }) => {
     const groups = groupBySlo(details.issues);
     return new Response(
         JSON.stringify({
+            retrieved: details.cachedAt,
             triageViolations: groups.triageViolations.length,
             urgentViolations: groups.urgentViolations.length,
             importantViolations: groups.importantViolations.length,

@@ -346,8 +346,6 @@ async function logRateLimit() {
     }`)));
 }
 
-const now = Temporal.Now.instant().round('second');
-
 interface GlobalStatsInput {
   totalRepos: number,
   reposFinished: number;
@@ -443,6 +441,7 @@ function countSloTime(issue, now: Temporal.Instant): Temporal.Duration {
 }
 
 async function analyzeRepo(org: string, repoName: string, globalStats: GlobalStatsInput): Promise<RepoSummary> {
+  const now = Temporal.Now.instant().round("second");
   let result: RepoSummary | null = null;
   try {
     result = JSON.parse(await fs.readFile(`${config.outDir}/${org}/${repoName}.json`, { encoding: 'utf8' }),

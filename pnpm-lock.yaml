@@ -24,14 +24,17 @@ dependencies:
     specifier: ^3.2.4
     version: 3.2.4(@types/node@20.8.9)
   browser-specs:
-    specifier: ^3.68.0
-    version: 3.68.0
+    specifier: ^3.70.0
+    version: 3.70.0
   colorjs.io:
     specifier: ^0.4.5
     version: 0.4.5
   commander:
     specifier: ^11.1.0
     version: 11.1.0
+  csv-stringify:
+    specifier: ^6.4.4
+    version: 6.4.4
   node-fetch:
     specifier: ^3.3.2
     version: 3.3.2
@@ -1323,8 +1326,8 @@ packages:
     dependencies:
       fill-range: 7.0.1
 
-  /browser-specs@3.68.0:
-    resolution: {integrity: sha512-NLoltHI4zjThWgMU+JuUZzLz8QxI5+JudrQlSCGHIuuenGq5Od87EJ3Zb5aow7V/7mN9O4SQH1RT+cPLkxKQLA==}
+  /browser-specs@3.70.0:
+    resolution: {integrity: sha512-OwBahZxEf2DkM3q5Ipc+1dat9uvYS73ajQfLrkfcV7csIl2vjcrGVL24jYBSGY16Ms7BxJ6vdjsd2oK+kmf9cA==}
     dev: false
 
   /browserslist@4.22.1:
@@ -1522,6 +1525,10 @@ packages:
       path-key: 3.1.1
       shebang-command: 2.0.0
       which: 2.0.2
+    dev: false
+
+  /csv-stringify@6.4.4:
+    resolution: {integrity: sha512-NDshLupGa7gp4UG4sSNIqwYJqgSwvds0SvENntxoVoVvTzXcrHvd5gG2MWpbRpSNvk59dlmIe1IwNvSxN4IVmg==}
     dev: false
 
   /data-uri-to-buffer@4.0.1:
