@@ -4,8 +4,8 @@ import { Octokit as OctokitCore } from '@octokit/core';
 import { paginateGraphql } from '@octokit/plugin-paginate-graphql';
 import { throttling } from '@octokit/plugin-throttling';
 import { RequestError } from "@octokit/request-error";
-import specs from 'browser-specs' assert { type: "json" };
 import fs from 'node:fs/promises';
+import { browserSpecs } from "./browser-specs.js";
 import config from './third_party/config.cjs';
 
 const Octokit = OctokitCore.plugin(throttling, paginateGraphql);
@@ -537,7 +537,7 @@ async function analyzeRepo(org: string, repoName: string, globalStats: GlobalSta
 
 async function main() {
   const repos = new Set<string>();
-  for (const spec of specs) {
+  for (const spec of await browserSpecs()) {
     const repo = spec.nightly.repository;
     if (repo) {
       repos.add(repo);

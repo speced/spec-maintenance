@@ -23,9 +23,6 @@ dependencies:
   astro:
     specifier: ^3.2.4
     version: 3.2.4(@types/node@20.8.9)
-  browser-specs:
-    specifier: ^3.70.0
-    version: 3.70.0
   colorjs.io:
     specifier: ^0.4.5
     version: 0.4.5
@@ -1325,10 +1322,6 @@ packages:
     engines: {node: '>=8'}
     dependencies:
       fill-range: 7.0.1
-
-  /browser-specs@3.70.0:
-    resolution: {integrity: sha512-OwBahZxEf2DkM3q5Ipc+1dat9uvYS73ajQfLrkfcV7csIl2vjcrGVL24jYBSGY16Ms7BxJ6vdjsd2oK+kmf9cA==}
-    dev: false
 
   /browserslist@4.22.1:
     resolution: {integrity: sha512-FEVc202+2iuClEhZhrWy6ZiAcRLvNMyYcxZ8raemul1DYVOVdFsbqckWLdsixQZCpJlwe77Z3UTalE7jsjnKfQ==}

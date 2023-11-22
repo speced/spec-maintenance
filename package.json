@@ -21,7 +21,6 @@
     "@octokit/plugin-throttling": "^8.1.2",
     "@octokit/request-error": "^5.0.1",
     "astro": "^3.2.4",
-    "browser-specs": "^3.70.0",
     "colorjs.io": "^0.4.5",
     "commander": "^11.1.0",
     "csv-stringify": "^6.4.4",
