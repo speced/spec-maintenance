@@ -1,15 +1,22 @@
 import z from 'zod';
 
-const BrowserSpecs = z.object({
+const WebSpecs = z.object({
+  categories: z.enum(["browser"]).array(),
   nightly: z.object({
     repository: z.string().url().optional(),
   })
 }).array();
 
-export type BrowserSpecs = z.infer<typeof BrowserSpecs>;
+export type WebSpecs = z.infer<typeof WebSpecs>;
+export type BrowserSpecs = WebSpecs;
+
+export async function webSpecs() {
+  return WebSpecs.parse(
+    await fetch('https://w3c.github.io/browser-specs/index.json'
+    ).then(response => response.json()));
+}
 
 export async function browserSpecs() {
-  return BrowserSpecs.parse(
-    await fetch('https://raw.githubusercontent.com/w3c/browser-specs/browser-specs%40latest/index.json'
-    ).then(response => response.json()));
+  const allSpecs = await webSpecs();
+  return allSpecs.filter(spec => spec.categories.includes("browser"));
 }
