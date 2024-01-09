@@ -18,7 +18,7 @@ export interface SloStatus {
     withinSlo: boolean;
 };
 
-export function slo(issue: IssueSummary): SloStatus {
+export function slo(issue: Pick<IssueSummary, "whichSlo"|"sloTimeUsed">): SloStatus {
     if (issue.whichSlo === "none") {
         return { whichSlo: "none", withinSlo: true };
     }

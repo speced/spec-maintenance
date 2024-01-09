@@ -1,17 +1,9 @@
-import { Temporal } from '@js-temporal/polyfill';
 import { z } from 'zod';
+import { checkDuration, checkInstant, duration, instant } from './zod-helpers';
 
 export const SloType = z.enum(["triage", "urgent", "important", "none"]);
 export type SloType = z.infer<typeof SloType>;
 
-const checkInstant = z.string().refine(val => {
-    try { Temporal.Instant.from(val); return true; } catch { return false; }
-});
-const checkDuration = z.string().refine(val => {
-    try { Temporal.Duration.from(val); return true; } catch { return false; }
-});
-const duration = z.string().transform(val => Temporal.Duration.from(val));
-const instant = z.string().transform(val => Temporal.Instant.from(val));
 
 export const IssueSummaryInContent = z.object({
     url: z.string().url(),

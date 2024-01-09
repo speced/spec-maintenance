@@ -1,3 +1,4 @@
+import type { RepoJson } from "@lib/published-json";
 import { RepoSummary } from "@lib/repo-summaries";
 import { groupBySlo } from "@lib/slo";
 import type {
@@ -20,8 +21,10 @@ type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 export const GET: APIRoute = ({ props }) => {
     const { details } = props as Props;
     const groups = groupBySlo(details.issues);
-    return new Response(
-        JSON.stringify({
+    const outOfSloObj: { outOfSlo?: boolean } = { outOfSlo: true };
+    const summary = {
+        repo: `${details.org}/${details.repo}`,
+        summary: {
             retrieved: details.cachedAt,
             triageViolations: groups.triageViolations.length,
             urgentViolations: groups.urgentViolations.length,
@@ -30,5 +33,11 @@ export const GET: APIRoute = ({ props }) => {
             urgent: groups.urgent.length,
             important: groups.important.length,
             other: groups.other.length,
-        }));
+        },
+        triage: groups.triageViolations.map(issue => Object.assign(issue, outOfSloObj)).concat(groups.untriaged),
+        urgent: groups.urgentViolations.map(issue => Object.assign(issue, outOfSloObj)).concat(groups.urgent),
+        important: groups.importantViolations.map(issue => Object.assign(issue, outOfSloObj)).concat(groups.important),
+        other: groups.other,
+    } satisfies RepoJson;
+    return new Response(JSON.stringify(summary));
 }

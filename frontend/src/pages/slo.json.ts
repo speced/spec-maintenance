@@ -1,3 +1,4 @@
+import type { SummaryJson } from '@lib/published-json';
 import { RepoSummary } from '@lib/repo-summaries';
 import { groupBySlo } from '@lib/slo';
 import type { APIRoute } from 'astro';
@@ -18,7 +19,7 @@ export const GET: APIRoute = async () => {
             important: groups.important.length,
             other: groups.other.length,
         }];
-    }));
+    })) satisfies SummaryJson;
 
     return new Response(JSON.stringify(repoSummaries));
 };
