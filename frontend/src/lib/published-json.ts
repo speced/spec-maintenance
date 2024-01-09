@@ -1,6 +1,6 @@
 import z from 'zod';
-import { IssueSummary } from './repo-summaries';
-import { instant } from './zod-helpers';
+import { IssueSummary } from './repo-summaries.js';
+import { instant } from './zod-helpers.js';
 
 export const SummaryJson = z.object({}).catchall(z.object({
         triageViolations: z.number(),

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { checkDuration, checkInstant, duration, instant } from './zod-helpers';
+import { checkDuration, checkInstant, duration, instant } from './zod-helpers.js';
 
 export const SloType = z.enum(["triage", "urgent", "important", "none"]);
 export type SloType = z.infer<typeof SloType>;
