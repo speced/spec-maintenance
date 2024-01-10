@@ -1,7 +1,9 @@
 import z from 'zod';
 
+// See https://github.com/w3c/browser-specs/blob/main/schema/index.json for the authoritative schema.
 const WebSpecs = z.object({
   categories: z.enum(["browser"]).array(),
+  standing: z.enum(["good", "pending", "discontinued"]),
   nightly: z.object({
     repository: z.string().url().optional(),
   })
@@ -11,9 +13,10 @@ export type WebSpecs = z.infer<typeof WebSpecs>;
 export type BrowserSpecs = WebSpecs;
 
 export async function webSpecs() {
-  return WebSpecs.parse(
-    await fetch('https://w3c.github.io/browser-specs/index.json'
-    ).then(response => response.json()));
+  const allSpecs = WebSpecs.parse(
+    await fetch('https://w3c.github.io/browser-specs/index.json')
+      .then(response => response.json()))
+  return allSpecs.filter(spec => spec.standing !== "discontinued");
 }
 
 export async function browserSpecs() {
