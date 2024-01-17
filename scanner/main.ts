@@ -2,7 +2,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import { IssueSummary, RepoSummary } from '@lib/repo-summaries.js';
 import fs from 'node:fs/promises';
 import { browserSpecs } from "./browser-specs.js";
-import { fetchAllComments, getRepo, logRateLimit } from "./github.js";
+import { IssueOrPr, fetchAllComments, getRepo, logRateLimit } from "./github.js";
 import { NEEDS_REPORTER_FEEDBACK, countSloTime, hasLabels, whichSlo } from "./slo.js";
 import config from './third_party/config.cjs';
 
@@ -41,8 +41,8 @@ async function analyzeRepo(org: string, repoName: string, globalStats: GlobalSta
     };
 
     const allIssues = repo.issues.nodes.concat(repo.pullRequests.nodes);
-    const needEarlyComments: any[] = [];
-    const needAllComments: any[] = [];
+    const needEarlyComments: IssueOrPr[] = [];
+    const needAllComments: IssueOrPr[] = [];
     for (const issue of allIssues) {
       // Fetch comments for the issues whose SLO calculation needs their comments.
       if (issue.timelineItems.nodes.some(item =>
@@ -74,7 +74,7 @@ async function analyzeRepo(org: string, repoName: string, globalStats: GlobalSta
         }
       };
       if (issue.__typename === 'PullRequest') {
-        info.pull_request = { draft: issue.isDraft };
+        info.pull_request = { draft: issue.isDraft! };
       }
       if (issue.milestone) {
         info.milestone = {
@@ -85,7 +85,9 @@ async function analyzeRepo(org: string, repoName: string, globalStats: GlobalSta
       if (!result.labelsPresent && (
         issue.milestone ||
         issue.timelineItems.nodes.some(timelineItem =>
-          ['IssueComment', 'PullRequestReview', 'PullRequestReviewThread'].includes(timelineItem.__typename)
+          (timelineItem.__typename === 'IssueComment' ||
+            timelineItem.__typename === 'PullRequestReview' ||
+            timelineItem.__typename === 'PullRequestReviewThread')
           && info.author !== timelineItem.author?.login
         ))) {
         // If the repository doesn't have the triage labels, and an issue or PR has a comment from
