@@ -2,10 +2,14 @@ import { Temporal } from "@js-temporal/polyfill";
 import { SloType } from '@lib/repo-summaries.js';
 import type { IssueOrPr, Repository } from "./github.js";
 
-export const PRIORITY_URGENT = "Priority: Urgent";
-export const PRIORITY_IMPORTANT = "Priority: Important";
-export const PRIORITY_EVENTUALLY = "Priority: Eventually";
-export const NEEDS_REPORTER_FEEDBACK = "Needs Reporter Feedback";
+const PRIORITY_URGENT = "priority: urgent";
+const PRIORITY_IMPORTANT = "priority: important";
+const PRIORITY_EVENTUALLY = "priority: eventually";
+const AGENDA = "agenda+";
+const NEEDS_REPORTER_FEEDBACK = "needs reporter feedback";
+export function NeedsReporterFeedback(label: string) {
+  return label.toLowerCase() === NEEDS_REPORTER_FEEDBACK;
+}
 
 export function hasLabels(repo: Pick<Repository, 'labels'>): boolean {
   return [PRIORITY_URGENT, PRIORITY_IMPORTANT, PRIORITY_EVENTUALLY].every(label =>
@@ -13,14 +17,14 @@ export function hasLabels(repo: Pick<Repository, 'labels'>): boolean {
 }
 
 export function whichSlo(issue: Pick<IssueOrPr, 'labels' | 'isDraft'>): SloType {
-  const labels: string[] = issue.labels.nodes.map(label => label.name);
+  const labels: string[] = issue.labels.nodes.map(label => label.name.toLowerCase());
   if (issue.isDraft || labels.includes(PRIORITY_EVENTUALLY) || labels.includes(NEEDS_REPORTER_FEEDBACK)) {
     return "none";
   }
   if (labels.includes(PRIORITY_URGENT)) {
     return "urgent";
   }
-  if (labels.includes(PRIORITY_IMPORTANT)) {
+  if (labels.includes(PRIORITY_IMPORTANT) || labels.includes(AGENDA)) {
     return "important";
   }
   return "triage";
@@ -65,12 +69,12 @@ export function countSloTime(
         pause("draft");
         break;
       case 'LabeledEvent':
-        if (timelineItem.label.name === NEEDS_REPORTER_FEEDBACK) {
+        if (NeedsReporterFeedback(timelineItem.label.name)) {
           pause("need-feedback");
         }
         break;
       case 'UnlabeledEvent':
-        if (timelineItem.label.name === NEEDS_REPORTER_FEEDBACK) {
+        if (NeedsReporterFeedback(timelineItem.label.name)) {
           unpause("need-feedback");
         }
         break;

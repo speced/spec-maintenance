@@ -3,7 +3,7 @@ import { IssueSummary, RepoSummary } from '@lib/repo-summaries.js';
 import fs from 'node:fs/promises';
 import { browserSpecs } from "./browser-specs.js";
 import { IssueOrPr, fetchAllComments, getRepo, logRateLimit } from "./github.js";
-import { NEEDS_REPORTER_FEEDBACK, countSloTime, hasLabels, whichSlo } from "./slo.js";
+import { NeedsReporterFeedback, countSloTime, hasLabels, whichSlo } from "./slo.js";
 import config from './third_party/config.cjs';
 
 interface GlobalStatsInput {
@@ -46,7 +46,7 @@ async function analyzeRepo(org: string, repoName: string, globalStats: GlobalSta
     for (const issue of allIssues) {
       // Fetch comments for the issues whose SLO calculation needs their comments.
       if (issue.timelineItems.nodes.some(item =>
-        item.__typename === 'LabeledEvent' && item.label.name === NEEDS_REPORTER_FEEDBACK)) {
+        item.__typename === 'LabeledEvent' && NeedsReporterFeedback(item.label.name))) {
         needAllComments.push(issue);
       } else if (!result.labelsPresent && !issue.milestone) {
         // We only need to see a few comments to see if someone other than the initial author has

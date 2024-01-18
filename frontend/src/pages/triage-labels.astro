@@ -31,6 +31,11 @@ import Layout from "../layouts/Layout.astro";
                 before progress can be made. The SLO clock doesn't advance
                 between when this label is set and when the reporter replies.
             </dd>
+            <dt><GhLabel {...ghLabels.agenda} /></dt>
+            <dd>
+                Treated the same as <GhLabel {...ghLabels.important} /> for SLO purposes,
+                but also implies that the issue needs to be discussed in a real-time meeting.
+            </dd>
         </dl>
     </main>
 </Layout>
