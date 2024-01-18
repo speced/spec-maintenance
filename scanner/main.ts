@@ -25,7 +25,7 @@ async function analyzeRepo(org: string, repoName: string, globalStats: GlobalSta
   } catch {
     // On error, fetch the body.
   }
-  if (!result || Temporal.Duration.compare(result.cachedAt.until(now), { hours: 24 }) > 0) {
+  if (!result || Temporal.Duration.compare(result.cachedAt.until(now), { hours: 22 }) > 0) {
     const repo = await getRepo(org, repoName);
 
     result = {
