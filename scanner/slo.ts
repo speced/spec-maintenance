@@ -55,6 +55,7 @@ export function countSloTime(
           // If the first change in draft status is to become ready for review, then the SLO must
           // have been paused for all previous events.
           timeUsed = Temporal.Duration.from({ seconds: 0 });
+          sloStartTime = Temporal.Instant.from(timelineItem.createdAt!);
           draftChanged = true;
         }
         unpause("draft");
@@ -82,7 +83,7 @@ export function countSloTime(
       case 'IssueComment':
       case 'PullRequestReview':
       case 'PullRequestReviewThread':
-        if (timelineItem.author?.login !== issue.author?.login) {
+        if (timelineItem.author?.login === issue.author?.login) {
           unpause("need-feedback");
         }
         break;
