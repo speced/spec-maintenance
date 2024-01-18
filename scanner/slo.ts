@@ -1,17 +1,18 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { SloType } from '@lib/repo-summaries.js';
+import type { IssueOrPr, Repository } from "./github.js";
 
 export const PRIORITY_URGENT = "Priority: Urgent";
 export const PRIORITY_IMPORTANT = "Priority: Important";
 export const PRIORITY_EVENTUALLY = "Priority: Eventually";
 export const NEEDS_REPORTER_FEEDBACK = "Needs Reporter Feedback";
 
-export function hasLabels(repo: any): boolean {
+export function hasLabels(repo: Pick<Repository, 'labels'>): boolean {
   return [PRIORITY_URGENT, PRIORITY_IMPORTANT, PRIORITY_EVENTUALLY].every(label =>
     repo.labels.nodes.some(labelNode => labelNode.name === label));
 }
 
-export function whichSlo(issue): SloType {
+export function whichSlo(issue: Pick<IssueOrPr, 'labels' | 'isDraft'>): SloType {
   const labels: string[] = issue.labels.nodes.map(label => label.name);
   if (issue.isDraft || labels.includes(PRIORITY_EVENTUALLY) || labels.includes(NEEDS_REPORTER_FEEDBACK)) {
     return "none";
@@ -25,7 +26,10 @@ export function whichSlo(issue): SloType {
   return "triage";
 }
 
-export function countSloTime(issue, now: Temporal.Instant): Temporal.Duration {
+export function countSloTime(
+  issue: Pick<IssueOrPr, 'createdAt' | 'author' | 'timelineItems'>,
+  now: Temporal.Instant
+): Temporal.Duration {
   let timeUsed = Temporal.Duration.from({ seconds: 0 });
   type PauseReason = "draft" | "need-feedback" | "closed";
   let pauseReason = new Set<PauseReason>();
@@ -35,14 +39,14 @@ export function countSloTime(issue, now: Temporal.Instant): Temporal.Duration {
   for (const timelineItem of issue.timelineItems.nodes) {
     function pause(reason: PauseReason) {
       if (pauseReason.size === 0) {
-        timeUsed = timeUsed.add(sloStartTime.until(timelineItem.createdAt));
+        timeUsed = timeUsed.add(sloStartTime.until(timelineItem.createdAt!));
       }
       pauseReason.add(reason);
     }
     function unpause(reason: PauseReason) {
       const deleted = pauseReason.delete(reason);
       if (pauseReason.size === 0 && deleted) {
-        sloStartTime = Temporal.Instant.from(timelineItem.createdAt);
+        sloStartTime = Temporal.Instant.from(timelineItem.createdAt!);
       }
     }
     switch (timelineItem.__typename) {

@@ -9,7 +9,11 @@
     "build": "astro --root frontend build",
     "preview": "astro --root frontend preview",
     "astro": "astro --root frontend",
-    "scan": "tsc && node build/scanner/main.js --out-dir frontend/src/content/github"
+    "scan": "tsc && node build/scanner/main.js --out-dir frontend/src/content/github",
+    "test": "tsc && mocha build"
+  },
+  "mocha": {
+    "spec": "build/**/*.test.js"
   },
   "keywords": [],
   "author": "",
@@ -34,8 +38,10 @@
   "devDependencies": {
     "@astrojs/check": "^0.3.4",
     "@tsconfig/node20": "^20.1.2",
+    "@types/mocha": "^10.0.6",
     "@types/node": "^20.10.6",
+    "mocha": "^10.2.0",
     "typescript": "^5.3.3"
   },
-  "packageManager": "pnpm@8.14.0+sha256.9cebf61abd83f68177b29484da72da9751390eaad46dfc3072d266bfbb1ba7bf"
+  "packageManager": "pnpm@8.14.1+sha256.2df78e65d433d7693b9d3fbdaf431b2d96bb4f96a2ffecd51a50efe16e50a6a8"
 }
