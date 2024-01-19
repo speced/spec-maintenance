@@ -51,7 +51,7 @@ untriaged.sort(cmpByTimeUsed);
         details.labelsPresent ? null : (
             <p>
                 This repository needs to add the{" "}
-                <a href="/triage-labels">triage labels</a>.
+                <a href={`${import.meta.env.BASE_URL}triage-labels`}>triage labels</a>.
             </p>
         )
     }

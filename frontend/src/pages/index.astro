@@ -73,8 +73,8 @@ const repoSummaries = repos.map((repo) => {
             triageViolations > 0 || urgentViolations > 0
                 ? "error"
                 : importantViolations > 0
-                ? "warning"
-                : "",
+                  ? "warning"
+                  : "",
         message: andFormatter.format(message),
     });
 });
@@ -120,11 +120,14 @@ repoSummaries.sort(compareByKey);
         <ul>
             <li>
                 7 days to triage an issue. An issue counts as triaged if any of
-                the "Priority" or "Agenda+" <a href="triage-labels">triage labels</a> are
-                applied. If a repository doesn't have the
-                <a href="triage-labels">triage labels</a> created, an issue
-                counts as triaged once it's assigned to a milestone or someone
-                other than the original author comments.
+                the "Priority" or "Agenda+" <a
+                    href={`${import.meta.env.BASE_URL}triage-labels`}
+                    >triage labels</a
+                > are applied. If a repository doesn't have the
+                <a href={`${import.meta.env.BASE_URL}triage-labels`}
+                    >triage labels</a
+                > created, an issue counts as triaged once it's assigned to a milestone
+                or someone other than the original author comments.
             </li>
             <li>14 days to close a <GhLabel {...ghLabels.urgent} /> issue.</li>
             <li>
