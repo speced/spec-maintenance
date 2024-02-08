@@ -6,7 +6,7 @@ const WebSpecs = z.object({
   standing: z.enum(["good", "pending", "discontinued"]),
   nightly: z.object({
     repository: z.string().url().optional(),
-  })
+  }).optional(),
 }).array();
 
 export type WebSpecs = z.infer<typeof WebSpecs>;

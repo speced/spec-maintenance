@@ -111,7 +111,7 @@ async function analyzeRepo(org: string, repoName: string, globalStats: GlobalSta
 async function main() {
   const repos = new Set<string>();
   for (const spec of await browserSpecs()) {
-    const repo = spec.nightly.repository;
+    const repo = spec.nightly?.repository;
     if (repo) {
       repos.add(repo);
     }
