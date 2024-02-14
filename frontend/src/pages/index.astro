@@ -10,10 +10,10 @@ const repos = await getCollection("github");
 
 let totalTriageViolations = 0;
 let totalUrgentViolations = 0;
-let totalImportantViolations = 0;
+let totalSoonViolations = 0;
 let totalNeedTriage = 0;
 let totalUrgent = 0;
-let totalImportant = 0;
+let totalSoon = 0;
 let totalOther = 0;
 
 const andFormatter = new Intl.ListFormat("en", {
@@ -26,18 +26,18 @@ const repoSummaries = repos.map((repo) => {
 
     const triageViolations = groups.triageViolations.length;
     const urgentViolations = groups.urgentViolations.length;
-    const importantViolations = groups.importantViolations.length;
+    const soonViolations = groups.soonViolations.length;
     const needTriage = groups.untriaged.length;
     const urgent = groups.urgent.length;
-    const important = groups.important.length;
+    const soon = groups.soon.length;
     const other = groups.other.length;
 
     totalTriageViolations += triageViolations;
     totalUrgentViolations += urgentViolations;
-    totalImportantViolations += importantViolations;
+    totalSoonViolations += soonViolations;
     totalNeedTriage += needTriage;
     totalUrgent += urgent;
-    totalImportant += important;
+    totalSoon += soon;
     totalOther += other;
 
     let message: string[] = [];
@@ -48,8 +48,8 @@ const repoSummaries = repos.map((repo) => {
         if (urgentViolations > 0) {
             message.push(`${urgentViolations} urgent SLO violations`);
         }
-    } else if (importantViolations > 0) {
-        message.push(`${importantViolations} important SLO violations`);
+    } else if (soonViolations > 0) {
+        message.push(`${soonViolations} soon SLO violations`);
     } else if (needTriage > 0 || urgent > 0) {
         if (needTriage > 0) {
             message.push(`${needTriage} issues that need triage`);
@@ -57,22 +57,22 @@ const repoSummaries = repos.map((repo) => {
         if (urgent > 0) {
             message.push(`${urgent} urgent issues`);
         }
-    } else if (important > 0) {
-        message.push(`${important} important issues`);
+    } else if (soon > 0) {
+        message.push(`${soon} soon-priority issues`);
     }
 
     return Object.assign({}, repo, {
         triageViolations,
         urgentViolations,
-        importantViolations,
+        soonViolations,
         needTriage,
         urgent,
-        important,
+        soon,
         other,
         class_:
             triageViolations > 0 || urgentViolations > 0
                 ? "error"
-                : importantViolations > 0
+                : soonViolations > 0
                   ? "warning"
                   : "",
         message: andFormatter.format(message),
@@ -88,12 +88,12 @@ function sortKey(summary: (typeof repoSummaries)[0]): {
             priority: 4,
             count: summary.triageViolations + summary.urgentViolations,
         };
-    } else if (summary.importantViolations > 0) {
-        return { priority: 3, count: summary.importantViolations };
+    } else if (summary.soonViolations > 0) {
+        return { priority: 3, count: summary.soonViolations };
     } else if (summary.needTriage > 0 || summary.urgent > 0) {
         return { priority: 2, count: summary.needTriage + summary.urgent };
-    } else if (summary.important > 0) {
-        return { priority: 1, count: summary.important };
+    } else if (summary.soon > 0) {
+        return { priority: 1, count: summary.soon };
     } else {
         return { priority: 0, count: summary.other };
     }
@@ -131,7 +131,7 @@ repoSummaries.sort(compareByKey);
             </li>
             <li>14 days to close a <GhLabel {...ghLabels.urgent} /> issue.</li>
             <li>
-                91 days to close a <GhLabel {...ghLabels.important} /> issue.
+                91 days to close a <GhLabel {...ghLabels.soon} /> issue.
             </li>
         </ul>
 
@@ -153,9 +153,9 @@ repoSummaries.sort(compareByKey);
                 ) : null
             }
             {
-                totalImportantViolations > 0 ? (
+                totalSoonViolations > 0 ? (
                     <li class="warning">
-                        {totalImportantViolations} important issues outside of
+                        {totalSoonViolations} soon-priority issues outside of
                         their SLO
                     </li>
                 ) : null
@@ -167,8 +167,8 @@ repoSummaries.sort(compareByKey);
             }
             {totalUrgent > 0 ? <li>{totalUrgent} urgent issues</li> : null}
             {
-                totalImportant > 0 ? (
-                    <li>{totalImportant} important issues</li>
+                totalSoon > 0 ? (
+                    <li>{totalSoon} soon-priority issues</li>
                 ) : null
             }
             {totalOther > 0 ? <li>{totalOther} other issues</li> : null}

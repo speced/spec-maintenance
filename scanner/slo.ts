@@ -3,7 +3,7 @@ import { SloType } from '@lib/repo-summaries.js';
 import type { IssueOrPr, Repository } from "./github.js";
 
 const PRIORITY_URGENT = "priority: urgent";
-const PRIORITY_IMPORTANT = "priority: important";
+const PRIORITY_SOON = "priority: soon";
 const PRIORITY_EVENTUALLY = "priority: eventually";
 const AGENDA = "agenda+";
 const NEEDS_REPORTER_FEEDBACK = "needs reporter feedback";
@@ -12,7 +12,7 @@ export function NeedsReporterFeedback(label: string) {
 }
 
 export function hasLabels(repo: Pick<Repository, 'labels'>): boolean {
-  return [PRIORITY_URGENT, PRIORITY_IMPORTANT, PRIORITY_EVENTUALLY].every(label =>
+  return [PRIORITY_URGENT, PRIORITY_SOON, PRIORITY_EVENTUALLY].every(label =>
     repo.labels.nodes.some(labelNode => labelNode.name === label));
 }
 
@@ -24,8 +24,8 @@ export function whichSlo(issue: Pick<IssueOrPr, 'labels' | 'isDraft'>): SloType 
   if (labels.includes(PRIORITY_URGENT)) {
     return "urgent";
   }
-  if (labels.includes(PRIORITY_IMPORTANT) || labels.includes(AGENDA)) {
-    return "important";
+  if (labels.includes(PRIORITY_SOON) || labels.includes(AGENDA)) {
+    return "soon";
   }
   return "triage";
 }

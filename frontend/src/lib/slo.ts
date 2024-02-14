@@ -5,11 +5,11 @@ import type { IssueSummary, SloType } from "./repo-summaries.js";
 
 const triageSLO = Temporal.Duration.from({ days: 7 });
 const urgentSLO = Temporal.Duration.from({ days: 14 });
-const importantSLO = Temporal.Duration.from({ days: 91 });
+const soonSLO = Temporal.Duration.from({ days: 91 });
 
 export const sloMap = {
     "urgent": urgentSLO,
-    "important": importantSLO,
+    "soon": soonSLO,
     "triage": triageSLO
 } as const;
 
@@ -38,20 +38,20 @@ export function cmpByTimeUsed(a: IssueSummary, b: IssueSummary) {
 export interface SloGroups {
     untriaged: IssueSummary[];
     urgent: IssueSummary[];
-    important: IssueSummary[];
+    soon: IssueSummary[];
     triageViolations: IssueSummary[];
     urgentViolations: IssueSummary[];
-    importantViolations: IssueSummary[];
+    soonViolations: IssueSummary[];
     other: IssueSummary[];
 }
 export function groupBySlo(issues: IssueSummary[]): SloGroups {
     const result: SloGroups = {
         untriaged: [],
         urgent: [],
-        important: [],
+        soon: [],
         triageViolations: [],
         urgentViolations: [],
-        importantViolations: [],
+        soonViolations: [],
         other: [],
     };
     for (const issue of issues) {
@@ -64,11 +64,11 @@ export function groupBySlo(issues: IssueSummary[]): SloGroups {
                     result.urgentViolations.push(issue);
                 }
                 break;
-            case "important":
+            case "soon":
                 if (withinSlo) {
-                    result.important.push(issue);
+                    result.soon.push(issue);
                 } else {
-                    result.importantViolations.push(issue);
+                    result.soonViolations.push(issue);
                 }
                 break;
             case "triage":

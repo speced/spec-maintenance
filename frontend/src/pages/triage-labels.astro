@@ -17,7 +17,7 @@ import Layout from "../layouts/Layout.astro";
                 Needs to be resolved more quickly than other issues. These
                 issues and PRs are expected to be resolved within 14 days.
             </dd>
-            <dt><GhLabel {...ghLabels.important} /></dt>
+            <dt><GhLabel {...ghLabels.soon} /></dt>
             <dd>
                 Needs to be resolved within a reasonable timeframe, but not as
                 quickly as urgent issues. These issues and PRs are expected to
@@ -33,7 +33,7 @@ import Layout from "../layouts/Layout.astro";
             </dd>
             <dt><GhLabel {...ghLabels.agenda} /></dt>
             <dd>
-                Treated the same as <GhLabel {...ghLabels.important} /> for SLO purposes,
+                Treated the same as <GhLabel {...ghLabels.soon} /> for SLO purposes,
                 but also implies that the issue needs to be discussed in a real-time meeting.
             </dd>
         </dl>

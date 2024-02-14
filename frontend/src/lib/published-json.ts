@@ -5,10 +5,10 @@ import { instant } from './zod-helpers.js';
 export const SummaryJson = z.object({}).catchall(z.object({
         triageViolations: z.number(),
         urgentViolations: z.number(),
-        importantViolations: z.number(),
+        soonViolations: z.number(),
         needTriage: z.number(),
         urgent: z.number(),
-        important: z.number(),
+        soon: z.number(),
         other: z.number(),
     }));
 export type SummaryJson = z.infer<typeof SummaryJson>;
@@ -21,15 +21,15 @@ export const RepoJson = z.object({
         retrieved: instant,
         triageViolations: z.number(),
         urgentViolations: z.number(),
-        importantViolations: z.number(),
+        soonViolations: z.number(),
         needTriage: z.number(),
         urgent: z.number(),
-        important: z.number(),
+        soon: z.number(),
         other: z.number(),
     }),
     triage: IssueSummaryWithSlo.array(),
     urgent: IssueSummaryWithSlo.array(),
-    important:IssueSummaryWithSlo.array(),
+    soon: IssueSummaryWithSlo.array(),
     other: IssueSummaryWithSlo.array(),
 });
 export type RepoJson = z.infer<typeof RepoJson>;
