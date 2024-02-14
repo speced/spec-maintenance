@@ -9,7 +9,7 @@ import { classMap } from 'lit/directives/class-map.js';
 const validCategories = [
     'triage',
     'urgent',
-    'important',
+    'soon',
     'other',
 ] as const;
 
@@ -63,7 +63,7 @@ export class IssuesByCategory extends LitElement {
         switch (this.category) {
             case null: return '';
             case "other": return '';
-            case "important": return 'important issues outside their SLO';
+            case "soon": return 'soon-priority issues outside their SLO';
             case "triage": return 'untriaged issues outside their SLO';
             case "urgent": return 'urgent issues outside their SLO';
         }
@@ -73,7 +73,7 @@ export class IssuesByCategory extends LitElement {
         switch (this.category) {
             case null: return '';
             case "other": return 'other issues';
-            case "important": return 'important issues';
+            case "soon": return 'soon-priority issues';
             case "triage": return 'untriaged issues';
             case "urgent": return 'urgent issues';
         }

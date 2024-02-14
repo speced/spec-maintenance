@@ -27,15 +27,15 @@ const { details } = Astro.props as Props;
 const {
     untriaged,
     triageViolations,
-    important,
-    importantViolations,
+    soon,
+    soonViolations,
     urgent,
     urgentViolations,
 } = groupBySlo(IssueSummary.array().parse(details.issues));
 urgent.push(...urgentViolations);
 urgent.sort(cmpByTimeUsed);
-important.push(...importantViolations);
-important.sort(cmpByTimeUsed);
+soon.push(...soonViolations);
+soon.sort(cmpByTimeUsed);
 untriaged.push(...triageViolations);
 untriaged.sort(cmpByTimeUsed);
 ---
@@ -80,12 +80,12 @@ untriaged.sort(cmpByTimeUsed);
             ) : null
         }
         {
-            important.length > 0 ? (
+            soon.length > 0 ? (
                 <li>
-                    <a href="#important">
-                        {importantViolations.length
-                            ? `${importantViolations.length} out-of-SLO important issues`
-                            : `${important.length} important issues`}
+                    <a href="#soon">
+                        {soonViolations.length
+                            ? `${soonViolations.length} out-of-SLO soon-priority issues`
+                            : `${soon.length} soon-priority issues`}
                     </a>
                 </li>
             ) : null
@@ -123,11 +123,11 @@ untriaged.sort(cmpByTimeUsed);
     }
 
     {
-        important.length > 0 ? (
+        soon.length > 0 ? (
             <>
-                <h2 id="important">Important</h2>
+                <h2 id="soon">soon</h2>
                 <ul>
-                    {important.map((issue) => (
+                    {soon.map((issue) => (
                         <li>
                             <Issue {issue} />
                         </li>

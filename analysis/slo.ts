@@ -18,15 +18,15 @@ async function main() {
     }
 
     let totalIssues = 0;
-    let sloTypes: { [type in SloType]: number } = { "triage": 0, "none": 0, "important": 0, "urgent": 0 };
+    let sloTypes: { [type in SloType]: number } = { "triage": 0, "none": 0, "soon": 0, "urgent": 0 };
     let exceededTriageSLO = 0;
     let outOfTriageSLO = 0;
     let outOfUrgentSLO = 0;
-    let outOfImportantSLO = 0;
+    let outOfSoonSLO = 0;
 
     const triageSLO = Temporal.Duration.from({ days: 7 });
     const urgentSLO = Temporal.Duration.from({ days: 14 });
-    const importantSLO = Temporal.Duration.from({ days: 91 });
+    const soonSLO = Temporal.Duration.from({ days: 91 });
 
     for (const repo of Object.values(repoSummaries)) {
         const scannedAt = repo.cachedAt;
@@ -39,9 +39,9 @@ async function main() {
                 Temporal.Duration.compare(issue.sloTimeUsed, urgentSLO) > 0) {
                 outOfUrgentSLO++;
             }
-            if (issue.whichSlo === "important" &&
-                Temporal.Duration.compare(issue.sloTimeUsed, importantSLO) > 0) {
-                outOfImportantSLO++;
+            if (issue.whichSlo === "soon" &&
+                Temporal.Duration.compare(issue.sloTimeUsed, soonSLO) > 0) {
+                outOfSoonSLO++;
             }
             if (issue.whichSlo === "triage" &&
                 Temporal.Duration.compare(issue.sloTimeUsed, triageSLO) > 0) {

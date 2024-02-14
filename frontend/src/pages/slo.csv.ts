@@ -18,8 +18,8 @@ export const GET: APIRoute = async () => {
             'Triage Violations': groups.triageViolations.length,
             Urgent: groups.urgent.length,
             'Urgent Violations': groups.urgentViolations.length,
-            Important: groups.important.length,
-            'Important Violations': groups.importantViolations.length,
+            Soon: groups.soon.length,
+            'Soon Violations': groups.soonViolations.length,
             Other: groups.other.length,
         };
     });

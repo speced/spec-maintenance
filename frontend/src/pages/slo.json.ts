@@ -13,10 +13,10 @@ export const GET: APIRoute = async () => {
         return [repo.id, {
             triageViolations: groups.triageViolations.length,
             urgentViolations: groups.urgentViolations.length,
-            importantViolations: groups.importantViolations.length,
+            soonViolations: groups.soonViolations.length,
             needTriage: groups.untriaged.length,
             urgent: groups.urgent.length,
-            important: groups.important.length,
+            soon: groups.soon.length,
             other: groups.other.length,
         }];
     })) satisfies SummaryJson;

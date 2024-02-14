@@ -24,7 +24,7 @@ issues we've ever had have violated this SLO.
 
 ## Priorities
 
-I propose we define 3 priority levels, with labels `Priority: Urgent`, `Priority: Important`, and
+I propose we define 3 priority levels, with labels `Priority: Urgent`, `Priority: Soon`, and
 `Priority: Eventually`. `Priority: Eventually` issues won't have an SLO. For the others, we can look
 at the latency distribution for closing issues. Still-open issues tend to be much older than closed
 issues, and I assume they'd mostly be labeled with `Priority: Eventually`.
@@ -41,5 +41,5 @@ mean            | 3.7 months
 With half of all closed issues being closed in about a week, we can probably set a `Priority:
 Urgent` SLO of 1 week more than the triage SLO, so 2 weeks.
 
-If we set a `Priority: Important` of 3 months, we'll catch over half of the remaining issues, so
+If we set a `Priority: Soon` SLO of 3 months, we'll catch over half of the remaining issues, so
 that's what I suggest.
