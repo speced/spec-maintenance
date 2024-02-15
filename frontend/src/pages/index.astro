@@ -124,10 +124,9 @@ repoSummaries.sort(compareByKey);
                     href={`${import.meta.env.BASE_URL}triage-labels`}
                     >triage labels</a
                 > are applied. If a repository doesn't have the
-                <a href={`${import.meta.env.BASE_URL}triage-labels`}
-                    >triage labels</a
-                > created, an issue counts as triaged once it's assigned to a milestone
-                or someone other than the original author comments.
+                <GhLabel {...ghLabels.eventually} /> label created, an issue counts
+                as triaged once it's assigned to a milestone or someone other than
+                the original author comments.
             </li>
             <li>14 days to close a <GhLabel {...ghLabels.urgent} /> issue.</li>
             <li>
@@ -166,11 +165,7 @@ repoSummaries.sort(compareByKey);
                 ) : null
             }
             {totalUrgent > 0 ? <li>{totalUrgent} urgent issues</li> : null}
-            {
-                totalSoon > 0 ? (
-                    <li>{totalSoon} soon-priority issues</li>
-                ) : null
-            }
+            {totalSoon > 0 ? <li>{totalSoon} soon-priority issues</li> : null}
             {totalOther > 0 ? <li>{totalOther} other issues</li> : null}
         </ul>
 
@@ -184,8 +179,8 @@ repoSummaries.sort(compareByKey);
                             </a>{" "}
                             {repo.data.labelsPresent ? null : (
                                 <>
-                                    (no
-                                    <a href="triage-labels">triage labels</a>)
+                                    (no <GhLabel {...ghLabels.eventually} />
+                                    label; guessing triage status)
                                 </>
                             )}
                         </dt>

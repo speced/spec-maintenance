@@ -90,8 +90,8 @@ async function analyzeRepo(org: string, repoName: string, globalStats: GlobalSta
             timelineItem.__typename === 'PullRequestReviewThread')
           && info.author !== timelineItem.author?.login
         ))) {
-        // If the repository doesn't have the triage labels, and an issue or PR has a comment from
-        // someone other than its creator, assume that person has also triaged the issue.
+        // If the repository doesn't have enough triage labels, and an issue or PR has a comment
+        // from someone other than its creator, assume that person has also triaged the issue.
         info.whichSlo = "none";
       }
       info.sloTimeUsed = countSloTime(issue, now);

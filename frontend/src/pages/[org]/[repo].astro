@@ -1,8 +1,10 @@
 ---
+import GhLabel from "@components/GhLabel.astro";
 import Issue from "@components/Issue.astro";
 import Layout from "@layouts/Layout.astro";
 import { IssueSummary } from "@lib/repo-summaries";
 import { cmpByTimeUsed, groupBySlo } from "@lib/slo";
+import * as ghLabels from "@lib/triage-labels";
 import type {
 GetStaticPaths,
 InferGetStaticParamsType,
@@ -50,8 +52,11 @@ untriaged.sort(cmpByTimeUsed);
     {
         details.labelsPresent ? null : (
             <p>
-                This repository needs to add the{" "}
-                <a href={`${import.meta.env.BASE_URL}triage-labels`}>triage labels</a>.
+                This repository doesn't have the
+                <GhLabel {...ghLabels.eventually} /> label that's used to mark
+                an issue as triaged without giving it an SLO. Until that's
+                added, this summary uses heuristics to guess if each issue has
+                been triaged.
             </p>
         )
     }

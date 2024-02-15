@@ -11,9 +11,14 @@ export function NeedsReporterFeedback(label: string) {
   return label.toLowerCase() === NEEDS_REPORTER_FEEDBACK;
 }
 
+/** Returns whether `repo` has enough labels to mark bugs as triaged.
+ *
+ * Because different repositories will adopt different subsets of the labels this tool recognizes,
+ * we should only look for the smallest subset that indicates the repo isn't relying on the triage
+ * heuristics. For now, that's just the `Priority: Eventually` label.
+ */
 export function hasLabels(repo: Pick<Repository, 'labels'>): boolean {
-  return [PRIORITY_URGENT, PRIORITY_SOON, PRIORITY_EVENTUALLY].every(label =>
-    repo.labels.nodes.some(labelNode => labelNode.name === label));
+  return repo.labels.nodes.some(labelNode => labelNode.name === PRIORITY_EVENTUALLY);
 }
 
 export function whichSlo(issue: Pick<IssueOrPr, 'labels' | 'isDraft'>): SloType {
