@@ -6,7 +6,7 @@ function i(s: string) {
   return Temporal.Instant.from(s);
 }
 describe("countSloTime", function () {
-  it("counts from issue creation", function () {
+  it("counts time the label is applied", function () {
     const now = i('2023-01-10T12:00Z');
     assert.strictEqual(countSloTime({
       createdAt: i('2023-01-01T00:00Z'),
@@ -15,9 +15,101 @@ describe("countSloTime", function () {
         totalCount: 3,
         pageInfo: { endCursor: null, hasNextPage: false },
         nodes: [
+          { // Unlike draft PRs, which are created in the draft state, current labels always have a
+            // LabeledEvent adding them.
+            __typename: "LabeledEvent",
+            createdAt: i("2023-01-02T00:00Z"),
+            label: { name: "Priority: Soon" }
+          }, {
+            __typename: "UnlabeledEvent",
+            createdAt: i("2023-01-03T00:00Z"),
+            label: { name: "Priority: Soon" }
+          }, {
+            __typename: "LabeledEvent",
+            createdAt: i("2023-01-04T00:00Z"),
+            label: { name: "Priority: Soon" }
+          },
         ]
       },
-    }, now).toJSON(), "P9DT12H");
+    }, now, "soon").toJSON(), "P7DT12H");
+  });
+
+  it("counts 'urgent' time toward 'soon' SLO", function () {
+    const now = i('2023-01-10T12:00Z');
+    assert.strictEqual(countSloTime({
+      createdAt: i('2023-01-01T00:00Z'),
+      author: { login: "joe" },
+      timelineItems: {
+        totalCount: 3,
+        pageInfo: { endCursor: null, hasNextPage: false },
+        nodes: [
+          { __typename: "LabeledEvent",
+            createdAt: i("2023-01-02T00:00Z"),
+            label: { name: "Priority: Urgent" }
+          }, {
+            __typename: "UnlabeledEvent",
+            createdAt: i("2023-01-03T00:00Z"),
+            label: { name: "Priority: Urgent" }
+          }, {
+            __typename: "LabeledEvent",
+            createdAt: i("2023-01-04T00:00Z"),
+            label: { name: "Priority: Soon" }
+          },
+        ]
+      },
+    }, now, "soon").toJSON(), "P7DT12H");
+  });
+
+  it("multiply-labeled time is counted once", function () {
+    const now = i('2023-01-10T12:00Z');
+    assert.strictEqual(countSloTime({
+      createdAt: i('2023-01-01T00:00Z'),
+      author: { login: "joe" },
+      timelineItems: {
+        totalCount: 3,
+        pageInfo: { endCursor: null, hasNextPage: false },
+        nodes: [
+          { __typename: "LabeledEvent",
+            createdAt: i("2023-01-02T00:00Z"),
+            label: { name: "Priority: Urgent" }
+          }, {
+            __typename: "LabeledEvent",
+            createdAt: i("2023-01-03T00:00Z"),
+            label: { name: "Priority: Soon" }
+          }, {
+            __typename: "UnlabeledEvent",
+            createdAt: i("2023-01-04T00:00Z"),
+            label: { name: "Priority: Urgent" }
+          },
+        ]
+      },
+    }, now, "soon").toJSON(), "P8DT12H");
+  });
+
+  it("does not count 'soon' time toward 'urgent' SLO", function () {
+    const now = i('2023-01-10T12:00Z');
+    assert.strictEqual(countSloTime({
+      createdAt: i('2023-01-01T00:00Z'),
+      author: { login: "joe" },
+      timelineItems: {
+        totalCount: 3,
+        pageInfo: { endCursor: null, hasNextPage: false },
+        nodes: [
+          { __typename: "LabeledEvent",
+            createdAt: i("2023-01-02T00:00Z"),
+            label: { name: "Priority: Soon" }
+          }, {
+            __typename: "UnlabeledEvent",
+            createdAt: i("2023-01-03T00:00Z"),
+            label: { name: "Priority: Soon" }
+          }, {
+            __typename: "LabeledEvent",
+            createdAt: i("2023-01-04T00:00Z"),
+            label: { name: "Priority: Urgent" }
+          },
+        ]
+      },
+    }, now, "urgent").toJSON(), "P6DT12H");
   });
 
   it("ignores closed time", function () {
@@ -29,6 +121,10 @@ describe("countSloTime", function () {
         totalCount: 3,
         pageInfo: { endCursor: null, hasNextPage: false },
         nodes: [{
+          __typename: "LabeledEvent",
+          createdAt: i("2023-01-01T00:00Z"),
+          label: { name: "Priority: Soon" }
+        }, {
           __typename: "ClosedEvent",
           createdAt: i("2023-01-02T00:00Z")
         }, {
@@ -37,7 +133,7 @@ describe("countSloTime", function () {
         },
         ]
       },
-    }, now).toJSON(), "P2D");
+    }, now, "soon").toJSON(), "P2D");
   });
 
   it("ignores needs-feedback time", function () {
@@ -50,6 +146,10 @@ describe("countSloTime", function () {
         pageInfo: { endCursor: null, hasNextPage: false },
         nodes: [{
           __typename: "LabeledEvent",
+          createdAt: i("2023-01-01T00:00Z"),
+          label: { name: "Priority: Soon" }
+        }, {
+          __typename: "LabeledEvent",
           createdAt: i("2023-01-02T00:00Z"),
           label: { name: "Needs Reporter Feedback" }
         }, {
@@ -59,7 +159,7 @@ describe("countSloTime", function () {
         },
         ]
       },
-    }, now).toJSON(), "P2D");
+    }, now, "soon").toJSON(), "P2D");
   });
 
   describe("stops needing feedback when reporter comments", function () {
@@ -75,6 +175,10 @@ describe("countSloTime", function () {
             pageInfo: { endCursor: null, hasNextPage: false },
             nodes: [{
               __typename: "LabeledEvent",
+              createdAt: i("2023-01-01T00:00Z"),
+              label: { name: "Priority: Soon" }
+            }, {
+              __typename: "LabeledEvent",
               createdAt: i("2023-01-02T00:00Z"),
               label: { name: "Needs Reporter Feedback" }
             }, {
@@ -86,7 +190,7 @@ describe("countSloTime", function () {
             },
             ]
           },
-        }, now).toJSON(), "P4D");
+        }, now, "soon").toJSON(), "P4D");
       });
     }
   });
@@ -101,6 +205,10 @@ describe("countSloTime", function () {
         pageInfo: { endCursor: null, hasNextPage: false },
         nodes: [{
           __typename: "LabeledEvent",
+          createdAt: i("2023-01-01T00:00Z"),
+          label: { name: "Priority: Soon" }
+        }, {
+          __typename: "LabeledEvent",
           createdAt: i("2023-01-02T00:00Z"),
           label: { name: "Needs Reporter Feedback" }
         }, {
@@ -114,7 +222,7 @@ describe("countSloTime", function () {
         },
         ]
       },
-    }, now).toJSON(), "P2D");
+    }, now, "soon").toJSON(), "P2D");
   });
 
   it("ignores draft time", function () {
@@ -126,6 +234,10 @@ describe("countSloTime", function () {
         totalCount: 3,
         pageInfo: { endCursor: null, hasNextPage: false },
         nodes: [{
+          __typename: "LabeledEvent",
+          createdAt: i("2023-01-01T00:00Z"),
+          label: { name: "Priority: Soon" }
+        }, {
           __typename: "ConvertToDraftEvent",
           createdAt: i("2023-01-02T00:00Z"),
         }, {
@@ -134,7 +246,7 @@ describe("countSloTime", function () {
         }
         ]
       },
-    }, now).toJSON(), "P2D");
+    }, now, "soon").toJSON(), "P2D");
   });
 
   it("handles PRs created as drafts", function () {
@@ -146,6 +258,10 @@ describe("countSloTime", function () {
         totalCount: 3,
         pageInfo: { endCursor: null, hasNextPage: false },
         nodes: [{
+          __typename: "LabeledEvent",
+          createdAt: i("2023-01-01T00:00Z"),
+          label: { name: "Priority: Soon" }
+        }, {
           // Seeing the ReadyForReviewEvent first means the PR was created as a draft, so all time
           // before it should be ignored.
           __typename: "ReadyForReviewEvent",
@@ -153,7 +269,7 @@ describe("countSloTime", function () {
         }
         ]
       },
-    }, now).toJSON(), "P1D");
+    }, now, "soon").toJSON(), "P1D");
   });
 
   it("only counts time where none of the exemptions are active", function () {
@@ -164,7 +280,11 @@ describe("countSloTime", function () {
       timelineItems: {
         totalCount: 3,
         pageInfo: { endCursor: null, hasNextPage: false },
-        nodes: [{ // Draft
+        nodes: [{
+          __typename: "LabeledEvent",
+          createdAt: i("2023-01-01T00:00Z"),
+          label: { name: "Priority: Soon" }
+        }, { // Draft
           __typename: "ClosedEvent",
           createdAt: i("2023-01-02T00:00Z")
         }, { // Draft & Closed
@@ -188,7 +308,7 @@ describe("countSloTime", function () {
         },
         ]
       },
-    }, now).toJSON(), "P1D");
+    }, now, "soon").toJSON(), "P1D");
   });
 
 });

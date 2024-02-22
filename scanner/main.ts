@@ -94,7 +94,7 @@ async function analyzeRepo(org: string, repoName: string, globalStats: GlobalSta
         // from someone other than its creator, assume that person has also triaged the issue.
         info.whichSlo = "none";
       }
-      info.sloTimeUsed = countSloTime(issue, now);
+      info.sloTimeUsed = countSloTime(issue, now, info.whichSlo);
       result.issues.push(info);
     };
   }
