@@ -35,13 +35,33 @@ export function whichSlo(issue: Pick<IssueOrPr, 'labels' | 'isDraft'>): SloType 
   return "triage";
 }
 
+function anyLabelAppliesSlo(labelsLowercase: Set<string>, slo: SloType): boolean {
+  let acceptedLabels: string[];
+  switch (slo) {
+    case "none": return false;
+    case "triage": return true;
+    case "soon":
+      acceptedLabels = [PRIORITY_SOON, PRIORITY_URGENT]
+      break;
+    case "urgent":
+      acceptedLabels = [PRIORITY_URGENT];
+      break;
+  }
+  return acceptedLabels.some(label => labelsLowercase.has(label));
+}
+
 export function countSloTime(
   issue: Pick<IssueOrPr, 'createdAt' | 'author' | 'timelineItems'>,
-  now: Temporal.Instant
+  now: Temporal.Instant,
+  slo: SloType,
 ): Temporal.Duration {
   let timeUsed = Temporal.Duration.from({ seconds: 0 });
-  type PauseReason = "draft" | "need-feedback" | "closed";
-  let pauseReason = new Set<PauseReason>();
+  type PauseReason = "draft" | "need-feedback" | "closed" | "no-slo-label";
+  const pauseReason = new Set<PauseReason>();
+  const activeLabelsLowercase = new Set<string>();
+  if (!anyLabelAppliesSlo(activeLabelsLowercase, slo)) {
+    pauseReason.add("no-slo-label");
+  }
   let draftChanged = false;
   let sloStartTime = Temporal.Instant.from(issue.createdAt);
 
@@ -74,13 +94,21 @@ export function countSloTime(
         pause("draft");
         break;
       case 'LabeledEvent':
+        activeLabelsLowercase.add(timelineItem.label.name.toLowerCase());
         if (NeedsReporterFeedback(timelineItem.label.name)) {
           pause("need-feedback");
         }
+        if (anyLabelAppliesSlo(activeLabelsLowercase, slo)) {
+          unpause("no-slo-label");
+        }
         break;
       case 'UnlabeledEvent':
+        activeLabelsLowercase.delete(timelineItem.label.name.toLowerCase());
         if (NeedsReporterFeedback(timelineItem.label.name)) {
           unpause("need-feedback");
+        }
+        if (!anyLabelAppliesSlo(activeLabelsLowercase, slo)) {
+          pause("no-slo-label");
         }
         break;
       case 'ClosedEvent':
