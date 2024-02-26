@@ -12,6 +12,8 @@ updates:
       minor-updates:
         patterns: ["*"]
         update-types: [patch, minor]
+      octokit:
+        patterns: ["@octokit/*"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
