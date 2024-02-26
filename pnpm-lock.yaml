@@ -21,8 +21,8 @@ dependencies:
     specifier: ^8.1.3
     version: 8.1.3(@octokit/core@5.1.0)
   '@octokit/request-error':
-    specifier: ^5.0.1
-    version: 5.0.1
+    specifier: ^6.0.1
+    version: 6.0.1
   '@webcomponents/template-shadowroot':
     specifier: ^0.2.1
     version: 0.2.1
@@ -750,10 +750,6 @@ packages:
       universal-user-agent: 6.0.1
     dev: false
 
-  /@octokit/openapi-types@19.0.2:
-    resolution: {integrity: sha512-8li32fUDUeml/ACRp/njCWTsk5t17cfTM1jp9n08pBrqs5cDFJubtjsSnuz56r5Tad6jdEPJld7LxNp9dNcyjQ==}
-    dev: false
-
   /@octokit/openapi-types@19.1.0:
     resolution: {integrity: sha512-6G+ywGClliGQwRsjvqVYpklIfa7oRPA0vyhPQG/1Feh+B+wU0vGH1JiJ5T25d3g1JZYBHzR2qefLi9x8Gt+cpw==}
     dev: false
@@ -782,9 +778,16 @@ packages:
     resolution: {integrity: sha512-X7pnyTMV7MgtGmiXBwmO6M5kIPrntOXdyKZLigNfQWSEQzVxR4a4vo49vJjTWX70mPndj8KhfT4Dx+2Ng3vnBQ==}
     engines: {node: '>= 18'}
     dependencies:
-      '@octokit/types': 12.1.1
+      '@octokit/types': 12.4.0
       deprecation: 2.3.1
       once: 1.4.0
+    dev: false
+
+  /@octokit/request-error@6.0.1:
+    resolution: {integrity: sha512-EPeILOAEGqwmEG6g7dYlbvqkjJ5nWNcZvQpgeLEn1MieIcJ0xK0CJtvVcIMXqzIM8DOWzvI6zL5FQAwjTvk/Tg==}
+    engines: {node: '>= 18'}
+    dependencies:
+      '@octokit/types': 12.4.0
     dev: false
 
   /@octokit/request@8.1.6:
@@ -795,12 +798,6 @@ packages:
       '@octokit/request-error': 5.0.1
       '@octokit/types': 12.4.0
       universal-user-agent: 6.0.1
-    dev: false
-
-  /@octokit/types@12.1.1:
-    resolution: {integrity: sha512-qnJTldJ1NyGT5MTsCg/Zi+y2IFHZ1Jo5+njNCjJ9FcainV7LjuHgmB697kA0g4MjZeDAJsM3B45iqCVsCLVFZg==}
-    dependencies:
-      '@octokit/openapi-types': 19.0.2
     dev: false
 
   /@octokit/types@12.4.0:
