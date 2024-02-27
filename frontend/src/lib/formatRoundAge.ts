@@ -22,10 +22,10 @@ export function formatRoundAge(age: Temporal.Duration): string {
     } else if (totalDays > 23 / 24) {
         const roundDays = Math.round(totalDays);
         return `${roundDays} day${roundDays === 1 ? '' : 's'}`;
-    } else if (totalDays > 59 / 60 / 24) {
+    } else if (totalDays > 59.4 / 60 / 24) {
         const roundHours = age.round({ largestUnit: 'hour', smallestUnit: 'hour' }).hours;
         return `${roundHours} hour${roundHours === 1 ? '' : 's'}`;
-    } else if (totalDays > 59 / 60 / 60 / 24) {
+    } else if (totalDays > 59.4 / 60 / 60 / 24) {
         const roundMinutes = age.round({ largestUnit: 'minute', smallestUnit: 'minute' }).minutes;
         return `${roundMinutes} minute${roundMinutes === 1 ? '' : 's'}`;
     } else {
