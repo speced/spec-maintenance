@@ -1,7 +1,7 @@
 ---
 import GhLabel from "@components/GhLabel.astro";
 import { IssueSummary } from "@lib/repo-summaries";
-import { groupBySlo } from "@lib/slo";
+import { agendaSLO, groupBySlo, soonSLO, triageSLO, urgentSLO } from "@lib/slo";
 import * as ghLabels from "@lib/triage-labels";
 import { getCollection } from "astro:content";
 import Layout from "../layouts/Layout.astro";
@@ -11,9 +11,11 @@ const repos = await getCollection("github");
 let totalTriageViolations = 0;
 let totalUrgentViolations = 0;
 let totalSoonViolations = 0;
+let totalAgendaViolations = 0;
 let totalNeedTriage = 0;
 let totalUrgent = 0;
 let totalSoon = 0;
+let totalAgenda = 0;
 let totalOther = 0;
 
 const andFormatter = new Intl.ListFormat("en", {
@@ -27,17 +29,21 @@ const repoSummaries = repos.map((repo) => {
     const triageViolations = groups.triageViolations.length;
     const urgentViolations = groups.urgentViolations.length;
     const soonViolations = groups.soonViolations.length;
+    const agendaViolations = groups.agendaViolations.length;
     const needTriage = groups.untriaged.length;
     const urgent = groups.urgent.length;
     const soon = groups.soon.length;
+    const agenda = groups.agenda.length;
     const other = groups.other.length;
 
     totalTriageViolations += triageViolations;
     totalUrgentViolations += urgentViolations;
     totalSoonViolations += soonViolations;
+    totalAgendaViolations += agendaViolations;
     totalNeedTriage += needTriage;
     totalUrgent += urgent;
     totalSoon += soon;
+    totalAgenda += agenda;
     totalOther += other;
 
     let message: string[] = [];
@@ -48,8 +54,13 @@ const repoSummaries = repos.map((repo) => {
         if (urgentViolations > 0) {
             message.push(`${urgentViolations} urgent SLO violations`);
         }
-    } else if (soonViolations > 0) {
-        message.push(`${soonViolations} soon SLO violations`);
+    } else if (soonViolations > 0 || agendaViolations > 0) {
+        if (soonViolations > 0) {
+            message.push(`${soonViolations} soon SLO violations`);
+        }
+        if (agendaViolations > 0) {
+            message.push(`${agendaViolations} agenda SLO violations`);
+        }
     } else if (needTriage > 0 || urgent > 0) {
         if (needTriage > 0) {
             message.push(`${needTriage} issues that need triage`);
@@ -57,22 +68,29 @@ const repoSummaries = repos.map((repo) => {
         if (urgent > 0) {
             message.push(`${urgent} urgent issues`);
         }
-    } else if (soon > 0) {
-        message.push(`${soon} soon-priority issues`);
+    } else if (soon > 0 || agenda > 0) {
+        if (soon > 0) {
+            message.push(`${soon} soon-priority issues`);
+        }
+        if (agenda > 0) {
+            message.push(`${agenda} issues on the agenda`);
+        }
     }
 
     return Object.assign({}, repo, {
         triageViolations,
         urgentViolations,
         soonViolations,
+        agendaViolations,
         needTriage,
         urgent,
         soon,
+        agenda,
         other,
         class_:
             triageViolations > 0 || urgentViolations > 0
                 ? "error"
-                : soonViolations > 0
+                : soonViolations > 0 || agendaViolations > 0
                   ? "warning"
                   : "",
         message: andFormatter.format(message),
@@ -88,12 +106,15 @@ function sortKey(summary: (typeof repoSummaries)[0]): {
             priority: 4,
             count: summary.triageViolations + summary.urgentViolations,
         };
-    } else if (summary.soonViolations > 0) {
-        return { priority: 3, count: summary.soonViolations };
+    } else if (summary.soonViolations > 0 || summary.agendaViolations > 0) {
+        return {
+            priority: 3,
+            count: summary.soonViolations + summary.agendaViolations,
+        };
     } else if (summary.needTriage > 0 || summary.urgent > 0) {
         return { priority: 2, count: summary.needTriage + summary.urgent };
-    } else if (summary.soon > 0) {
-        return { priority: 1, count: summary.soon };
+    } else if (summary.soon > 0 || summary.agenda > 0) {
+        return { priority: 1, count: summary.soon + summary.agenda };
     } else {
         return { priority: 0, count: summary.other };
     }
@@ -119,8 +140,8 @@ repoSummaries.sort(compareByKey);
         <p>For now, this page sets SLOs of:</p>
         <ul>
             <li>
-                7 days to triage an issue. An issue counts as triaged if any of
-                the "Priority" or "Agenda+" <a
+                {triageSLO.days} days to triage an issue. An issue counts as triaged
+                if any of the "Priority" or "Agenda+" <a
                     href={`${import.meta.env.BASE_URL}triage-labels`}
                     >triage labels</a
                 > are applied. If a repository doesn't have the
@@ -128,9 +149,18 @@ repoSummaries.sort(compareByKey);
                 as triaged once it's assigned to a milestone or someone other than
                 the original author comments.
             </li>
-            <li>14 days to close a <GhLabel {...ghLabels.urgent} /> issue.</li>
             <li>
-                91 days to close a <GhLabel {...ghLabels.soon} /> issue.
+                {urgentSLO.days} days to close a <GhLabel
+                    {...ghLabels.urgent}
+                /> issue.
+            </li>
+            <li>
+                {soonSLO.days} days to close a <GhLabel {...ghLabels.soon} /> issue.
+            </li>
+            <li>
+                {agendaSLO.days} days to have a discussion about an <GhLabel
+                    {...ghLabels.agenda}
+                /> issue.
             </li>
         </ul>
 
@@ -160,12 +190,25 @@ repoSummaries.sort(compareByKey);
                 ) : null
             }
             {
+                totalAgendaViolations > 0 ? (
+                    <li class="warning">
+                        {totalAgendaViolations} issues on the agenda outside of
+                        their SLO
+                    </li>
+                ) : null
+            }
+            {
                 totalNeedTriage > 0 ? (
                     <li>{totalNeedTriage} issues that need triage</li>
                 ) : null
             }
             {totalUrgent > 0 ? <li>{totalUrgent} urgent issues</li> : null}
             {totalSoon > 0 ? <li>{totalSoon} soon-priority issues</li> : null}
+            {
+                totalAgenda > 0 ? (
+                    <li>{totalAgenda} issues on the agenda</li>
+                ) : null
+            }
             {totalOther > 0 ? <li>{totalOther} other issues</li> : null}
         </ul>
 

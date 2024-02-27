@@ -29,14 +29,17 @@ export const GET: APIRoute = ({ props }) => {
             triageViolations: groups.triageViolations.length,
             urgentViolations: groups.urgentViolations.length,
             soonViolations: groups.soonViolations.length,
+            agendaViolations: groups.agendaViolations.length,
             needTriage: groups.untriaged.length,
             urgent: groups.urgent.length,
             soon: groups.soon.length,
+            agenda: groups.agenda.length,
             other: groups.other.length,
         },
         triage: groups.triageViolations.map(issue => Object.assign(issue, outOfSloObj)).concat(groups.untriaged),
         urgent: groups.urgentViolations.map(issue => Object.assign(issue, outOfSloObj)).concat(groups.urgent),
         soon: groups.soonViolations.map(issue => Object.assign(issue, outOfSloObj)).concat(groups.soon),
+        agenda: groups.agendaViolations.map(issue => Object.assign(issue, outOfSloObj)).concat(groups.agenda),
         other: groups.other,
     } satisfies RepoJson;
     return new Response(JSON.stringify(summary));

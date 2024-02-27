@@ -14,9 +14,11 @@ export const GET: APIRoute = async () => {
             triageViolations: groups.triageViolations.length,
             urgentViolations: groups.urgentViolations.length,
             soonViolations: groups.soonViolations.length,
+            agendaViolations: groups.agendaViolations.length,
             needTriage: groups.untriaged.length,
             urgent: groups.urgent.length,
             soon: groups.soon.length,
+            agenda: groups.agenda.length,
             other: groups.other.length,
         }];
     })) satisfies SummaryJson;

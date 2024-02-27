@@ -16,10 +16,12 @@ export const GET: APIRoute = async () => {
             Retrieved: repoData.cachedAt.round("second").toString(),
             'Need Triage': groups.untriaged.length,
             'Triage Violations': groups.triageViolations.length,
+            'Agenda Violations': groups.agendaViolations.length,
             Urgent: groups.urgent.length,
             'Urgent Violations': groups.urgentViolations.length,
             Soon: groups.soon.length,
             'Soon Violations': groups.soonViolations.length,
+            Agenda: groups.agenda.length,
             Other: groups.other.length,
         };
     });

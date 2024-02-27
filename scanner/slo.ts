@@ -1,5 +1,6 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { SloType } from '@lib/repo-summaries.js';
+import assert from "node:assert";
 import type { IssueOrPr, Repository } from "./github.js";
 
 const PRIORITY_URGENT = "priority: urgent";
@@ -29,7 +30,7 @@ export function whichSlo(issue: Pick<IssueOrPr, 'labels' | 'isDraft'>): SloType 
   if (labels.includes(PRIORITY_URGENT)) {
     return "urgent";
   }
-  if (labels.includes(PRIORITY_SOON) || labels.includes(AGENDA)) {
+  if (labels.includes(PRIORITY_SOON)) {
     return "soon";
   }
   return "triage";
@@ -41,7 +42,7 @@ function anyLabelAppliesSlo(labelsLowercase: Set<string>, slo: SloType): boolean
     case "none": return false;
     case "triage": return true;
     case "soon":
-      acceptedLabels = [PRIORITY_SOON, AGENDA, PRIORITY_URGENT]
+      acceptedLabels = [PRIORITY_SOON, PRIORITY_URGENT]
       break;
     case "urgent":
       acceptedLabels = [PRIORITY_URGENT];
@@ -130,4 +131,29 @@ export function countSloTime(
     timeUsed = timeUsed.add(sloStartTime.until(now));
   }
   return timeUsed.round({ largestUnit: 'days' });
+}
+
+
+/**
+ * Returns how long `issue` has been on the agenda, or `undefined` if it's not on the agenda.
+ *
+ * This counts from the most recent time that the Agenda+ label was added, since an issue can be
+ * added to the agenda multiple times, and it's not "late" this time just because the previous time
+ * took a while to handle.
+ */
+export function countAgendaTime(issue: Pick<IssueOrPr, 'url' | 'labels' | 'timelineItems'>,
+  now: Temporal.Instant): undefined | Temporal.Duration {
+  if (!issue.labels.nodes.some(label => label.name.toLowerCase() === AGENDA)) {
+    return undefined;
+  }
+  const agendaAddEvent = issue.timelineItems.nodes.findLast(timelineItem =>
+    timelineItem.__typename === 'LabeledEvent' &&
+    timelineItem.label.name.toLowerCase() === AGENDA);
+  if (agendaAddEvent === undefined) {
+    throw new Error(
+      `Issue ${issue.url} has an Agenda+ label but no timeline item adding that label.`,
+      { cause: issue });
+  }
+  assert.strictEqual(agendaAddEvent.__typename, 'LabeledEvent');
+  return agendaAddEvent.createdAt.until(now).round({ largestUnit: 'days' });
 }

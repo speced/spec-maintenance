@@ -1,7 +1,11 @@
 ---
 import GhLabel from "@components/GhLabel.astro";
+import { Temporal } from "@js-temporal/polyfill";
+import { agendaSLO, soonSLO, urgentSLO } from "@lib/slo";
 import * as ghLabels from "@lib/triage-labels.js";
 import Layout from "../layouts/Layout.astro";
+
+const today = Temporal.Now.plainDateISO();
 ---
 
 <Layout title="Triage Labels">
@@ -15,13 +19,17 @@ import Layout from "../layouts/Layout.astro";
             <dt><GhLabel {...ghLabels.urgent} /></dt>
             <dd>
                 Needs to be resolved more quickly than other issues. These
-                issues and PRs are expected to be resolved within 14 days.
+                issues and PRs are expected to be resolved within {
+                    urgentSLO.days
+                } days.
             </dd>
             <dt><GhLabel {...ghLabels.soon} /></dt>
             <dd>
                 Needs to be resolved within a reasonable timeframe, but not as
                 quickly as urgent issues. These issues and PRs are expected to
-                be resolved within 3 months.
+                be resolved within {
+                    soonSLO.round({ smallestUnit: "month", relativeTo: today }).months
+                } months.
             </dd>
             <dt><GhLabel {...ghLabels.eventually} /></dt>
             <dd>Doesn't need to be resolved within a particular time limit.</dd>
@@ -33,8 +41,12 @@ import Layout from "../layouts/Layout.astro";
             </dd>
             <dt><GhLabel {...ghLabels.agenda} /></dt>
             <dd>
-                Treated the same as <GhLabel {...ghLabels.soon} /> for SLO purposes,
-                but also implies that the issue needs to be discussed in a real-time meeting.
+                The issue needs a real-time discussion, often at a working group
+                meeting. These issues and PRs are expected to be discussed
+                within {
+                    agendaSLO.round({ smallestUnit: "week", relativeTo: today }).weeks
+                } weeks, at which point the label will be removed, but the issue
+                won't necessarily be closed.
             </dd>
         </dl>
     </main>

@@ -1,30 +1,54 @@
 ---
 import { formatRoundAge } from "@lib/formatRoundAge";
 import type { IssueSummary } from "@lib/repo-summaries";
-import { slo, sloMap } from "@lib/slo";
+import { agendaSLO, slo, sloMap } from "@lib/slo";
+import assert from "node:assert";
 
 interface Props {
     issue: IssueSummary;
+    // Show the issue's time on the agenda rather than its prioritized SLO time.
+    agenda?: boolean;
 }
-const { issue } = Astro.props;
+const { issue, agenda } = Astro.props;
 
-const { withinSlo } = slo(issue);
+const { withinSlo, onAgendaTooLong } = slo(issue);
 
-let timeToReport = issue.sloTimeUsed;
-if (!withinSlo) {
-    if (issue.whichSlo === "none") {
-        throw new Error(
-            `Can't be out of SLO with a 'none' SLO type: ${JSON.stringify(
-                issue
-            )}`
-        );
+const timeToReport = (function () {
+    if (agenda) {
+        assert(issue.onAgendaFor);
+        if (onAgendaTooLong) {
+            return issue.onAgendaFor.subtract(agendaSLO);
+        }
+        return issue.onAgendaFor;
+    } else {
+        if (withinSlo) {
+            return issue.sloTimeUsed;
+        } else {
+            if (issue.whichSlo === "none") {
+                throw new Error(
+                    `Can't be out of SLO with a 'none' SLO type: ${JSON.stringify(
+                        issue
+                    )}`
+                );
+            }
+            return issue.sloTimeUsed.subtract(sloMap[issue.whichSlo]);
+        }
     }
-    timeToReport = issue.sloTimeUsed.subtract(sloMap[issue.whichSlo]);
-}
+})();
 ---
 
 <a href={issue.url}>{issue.title}</a>: {
-    withinSlo ? "on maintainers' plate" : <span class="error">out of SLO</span>
+    agenda ? (
+        onAgendaTooLong ? (
+            <span class="error">out of SLO</span>
+        ) : (
+            "on the agenda"
+        )
+    ) : withinSlo ? (
+        "on maintainers' plate"
+    ) : (
+        <span class="error">out of SLO</span>
+    )
 } for {formatRoundAge(timeToReport)}
 
 <style is:global>
