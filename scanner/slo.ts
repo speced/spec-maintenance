@@ -41,7 +41,7 @@ function anyLabelAppliesSlo(labelsLowercase: Set<string>, slo: SloType): boolean
     case "none": return false;
     case "triage": return true;
     case "soon":
-      acceptedLabels = [PRIORITY_SOON, PRIORITY_URGENT]
+      acceptedLabels = [PRIORITY_SOON, AGENDA, PRIORITY_URGENT]
       break;
     case "urgent":
       acceptedLabels = [PRIORITY_URGENT];
