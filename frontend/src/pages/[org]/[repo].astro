@@ -3,7 +3,7 @@ import GhLabel from "@components/GhLabel.astro";
 import Issue from "@components/Issue.astro";
 import Layout from "@layouts/Layout.astro";
 import { IssueSummary } from "@lib/repo-summaries";
-import { cmpByTimeUsed, groupBySlo } from "@lib/slo";
+import { cmpByAgendaUsed, cmpByTimeUsed, groupBySlo } from "@lib/slo";
 import * as ghLabels from "@lib/triage-labels";
 import type {
 GetStaticPaths,
@@ -29,6 +29,8 @@ const { details } = Astro.props as Props;
 const {
     untriaged,
     triageViolations,
+    agenda,
+    agendaViolations,
     soon,
     soonViolations,
     urgent,
@@ -38,6 +40,8 @@ urgent.push(...urgentViolations);
 urgent.sort(cmpByTimeUsed);
 soon.push(...soonViolations);
 soon.sort(cmpByTimeUsed);
+agenda.push(...agendaViolations);
+agenda.sort(cmpByAgendaUsed);
 untriaged.push(...triageViolations);
 untriaged.sort(cmpByTimeUsed);
 ---
@@ -85,6 +89,17 @@ untriaged.sort(cmpByTimeUsed);
             ) : null
         }
         {
+            agenda.length > 0 ? (
+                <li>
+                    <a href="#agenda">
+                        {agendaViolations.length
+                            ? `${agendaViolations.length} issues on the agenda that have been waiting too long`
+                            : `${agenda.length} issues on the agenda`}
+                    </a>
+                </li>
+            ) : null
+        }
+        {
             soon.length > 0 ? (
                 <li>
                     <a href="#soon">
@@ -120,6 +135,21 @@ untriaged.sort(cmpByTimeUsed);
                     {urgent.map((issue) => (
                         <li>
                             <Issue {issue} />
+                        </li>
+                    ))}
+                </ul>
+            </>
+        ) : null
+    }
+
+    {
+        agenda.length > 0 ? (
+            <>
+                <h2 id="agenda">Agenda</h2>
+                <ul>
+                    {agenda.map((issue) => (
+                        <li>
+                            <Issue {issue} agenda />
                         </li>
                     ))}
                 </ul>

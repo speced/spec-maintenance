@@ -18,6 +18,8 @@ export const IssueSummaryInContent = z.object({
     }).optional(),
     sloTimeUsed: checkDuration,
     whichSlo: SloType,
+    // For Agenda+ issues, this is how long since the label was most-recently added.
+    onAgendaFor: checkDuration.optional(),
     stats: z.object({
         numTimelineItems: z.number(),
         numComments: z.number().optional(),
@@ -29,6 +31,7 @@ export type IssueSummaryInContent = z.infer<typeof IssueSummaryInContent>;
 export const IssueSummary = IssueSummaryInContent.extend({
     createdAt: instant,
     sloTimeUsed: duration,
+    onAgendaFor: duration.optional(),
 });
 export type IssueSummary = z.infer<typeof IssueSummary>;
 

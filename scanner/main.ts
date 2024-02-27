@@ -1,9 +1,9 @@
 import { Temporal } from "@js-temporal/polyfill";
-import { IssueSummary, RepoSummary } from '@lib/repo-summaries.js';
 import fs from 'node:fs/promises';
+import { IssueSummary, RepoSummary } from '../frontend/src/lib/repo-summaries.js';
 import { browserSpecs } from "./browser-specs.js";
 import { IssueOrPr, fetchAllComments, getRepo, logRateLimit } from "./github.js";
-import { NeedsReporterFeedback, countSloTime, hasLabels, whichSlo } from "./slo.js";
+import { NeedsReporterFeedback, countAgendaTime, countSloTime, hasLabels, whichSlo } from "./slo.js";
 import config from './third_party/config.cjs';
 
 interface GlobalStatsInput {
@@ -15,13 +15,7 @@ async function analyzeRepo(org: string, repoName: string, globalStats: GlobalSta
   const now = Temporal.Now.instant().round("second");
   let result: RepoSummary | null = null;
   try {
-    result = JSON.parse(await fs.readFile(`${config.outDir}/${org}/${repoName}.json`, { encoding: 'utf8' }),
-      (key, value) => {
-        if (key === 'cachedAt') {
-          return Temporal.Instant.from(value);
-        }
-        return value;
-      });
+    result = RepoSummary.parse(JSON.parse(await fs.readFile(`${config.outDir}/${org}/${repoName}.json`, { encoding: 'utf8' })));
   } catch {
     // On error, fetch the body.
   }
@@ -66,6 +60,7 @@ async function analyzeRepo(org: string, repoName: string, globalStats: GlobalSta
         createdAt: issue.createdAt,
         sloTimeUsed: Temporal.Duration.from({ seconds: 0 }),
         whichSlo: whichSlo(issue),
+        onAgendaFor: countAgendaTime(issue, now),
         labels: issue.labels.nodes.map(label => label.name),
         stats: {
           numTimelineItems: issue.timelineItems.totalCount,
