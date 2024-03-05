@@ -1,9 +1,18 @@
 ---
+import Duration from "@components/Duration.astro";
 import GhLabel from "@components/GhLabel.astro";
 import Issue from "@components/Issue.astro";
 import Layout from "@layouts/Layout.astro";
 import { IssueSummary } from "@lib/repo-summaries";
-import { cmpByAgendaUsed, cmpByTimeUsed, groupBySlo } from "@lib/slo";
+import {
+agendaSLO,
+cmpByAgendaUsed,
+cmpByTimeUsed,
+groupBySlo,
+soonSLO,
+triageSLO,
+urgentSLO,
+} from "@lib/slo";
 import * as ghLabels from "@lib/triage-labels";
 import type {
 GetStaticPaths,
@@ -116,6 +125,12 @@ untriaged.sort(cmpByTimeUsed);
         untriaged.length > 0 ? (
             <>
                 <h2 id="untriaged">Untriaged</h2>
+                <p>
+                    Try to
+                    {/* prettier-ignore */}
+                    <a href={`${import.meta.env.BASE_URL}about#need-triage`}>triage</a>
+                    issues within <Duration d={triageSLO} />.
+                </p>
                 <ul>
                     {untriaged.map((issue) => (
                         <li>
@@ -131,6 +146,13 @@ untriaged.sort(cmpByTimeUsed);
         urgent.length > 0 ? (
             <>
                 <h2 id="urgent">Urgent</h2>
+                <p>
+                    Try to resolve
+                    {/* prettier-ignore */}
+                    <a href={`${import.meta.env.BASE_URL}about#urgent`}>urgent
+                        issues</a>
+                    within <Duration d={urgentSLO} />.
+                </p>
                 <ul>
                     {urgent.map((issue) => (
                         <li>
@@ -146,6 +168,13 @@ untriaged.sort(cmpByTimeUsed);
         agenda.length > 0 ? (
             <>
                 <h2 id="agenda">Agenda</h2>
+                <p>
+                    Try to discuss
+                    {/* prettier-ignore */}
+                    <a href={`${import.meta.env.BASE_URL}about#agenda`}>issues
+                        on the agenda</a>
+                    within <Duration d={agendaSLO} />.
+                </p>
                 <ul>
                     {agenda.map((issue) => (
                         <li>
@@ -161,6 +190,13 @@ untriaged.sort(cmpByTimeUsed);
         soon.length > 0 ? (
             <>
                 <h2 id="soon">Soon</h2>
+                <p>
+                    Try to resolve
+                    {/* prettier-ignore */}
+                    <a href={`${import.meta.env.BASE_URL}about#soon`}>soon-priority
+                        issues</a>
+                    within <Duration d={soonSLO} />.
+                </p>
                 <ul>
                     {soon.map((issue) => (
                         <li>
