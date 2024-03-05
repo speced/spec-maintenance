@@ -1,0 +1,37 @@
+---
+import { Temporal } from "@js-temporal/polyfill";
+
+interface Props {
+    d: Temporal.Duration;
+    weeks?: boolean;
+    months?: boolean;
+}
+
+const { d, weeks, months } = Astro.props;
+
+const today = Temporal.Now.plainDateISO();
+
+function format(num: number, unit: string) {
+    return new Intl.NumberFormat(Astro.currentLocale, {
+        style: "unit",
+        unit,
+        unitDisplay: "long",
+    }).format(num);
+}
+---
+
+<time datetime={d.toJSON()}
+    >{
+        months
+            ? format(
+                  d.round({ smallestUnit: "month", relativeTo: today }).months,
+                  "month"
+              )
+            : weeks
+              ? format(
+                    d.round({ smallestUnit: "week", relativeTo: today }).weeks,
+                    "week"
+                )
+              : format(d.round({ smallestUnit: "day" }).days, "day")
+    }</time
+>
