@@ -15,11 +15,23 @@ const { title } = Astro.props;
         <title>{title}</title>
     </head>
     <body>
-        {
-            Astro.url.pathname === import.meta.env.BASE_URL ? null : (
-                <a href={import.meta.env.BASE_URL}>Back home.</a>
-            )
-        }
+        <nav>
+            {
+                Astro.url.pathname === import.meta.env.BASE_URL ? (
+                    <b>Home</b>
+                ) : (
+                    <a href={import.meta.env.BASE_URL}>Home</a>
+                )
+            }
+            |
+            {
+                Astro.url.pathname === `${import.meta.env.BASE_URL}about` ? (
+                    <b>About</b>
+                ) : (
+                    <a href={`${import.meta.env.BASE_URL}about`}>About</a>
+                )
+            }
+        </nav>
         <slot />
     </body>
 </html>
