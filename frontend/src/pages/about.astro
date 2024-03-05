@@ -1,0 +1,37 @@
+---
+import GhLabel from "@components/GhLabel.astro";
+import { agendaSLO, soonSLO, triageSLO, urgentSLO } from "@lib/slo";
+import * as ghLabels from "@lib/triage-labels";
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="About this maintenance tracker">
+    <main>
+        <p>For now, this page sets SLOs of:</p>
+        <ul>
+            <li>
+                {triageSLO.days} days to triage an issue. An issue counts as triaged
+                if any of the "Priority" or "Agenda+" <a
+                    href={`${import.meta.env.BASE_URL}triage-labels`}
+                    >triage labels</a
+                > are applied. If a repository doesn't have the
+                <GhLabel {...ghLabels.eventually} /> label created, an issue counts
+                as triaged once it's assigned to a milestone or someone other than
+                the original author comments.
+            </li>
+            <li>
+                {urgentSLO.days} days to close a <GhLabel
+                    {...ghLabels.urgent}
+                /> issue.
+            </li>
+            <li>
+                {soonSLO.days} days to close a <GhLabel {...ghLabels.soon} /> issue.
+            </li>
+            <li>
+                {agendaSLO.days} days to have a discussion about an <GhLabel
+                    {...ghLabels.agenda}
+                /> issue.
+            </li>
+        </ul>
+    </main>
+</Layout>

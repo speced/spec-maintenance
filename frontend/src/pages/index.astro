@@ -1,7 +1,7 @@
 ---
 import GhLabel from "@components/GhLabel.astro";
 import { IssueSummary } from "@lib/repo-summaries";
-import { agendaSLO, groupBySlo, soonSLO, triageSLO, urgentSLO } from "@lib/slo";
+import { groupBySlo } from "@lib/slo";
 import * as ghLabels from "@lib/triage-labels";
 import { getCollection } from "astro:content";
 import Layout from "../layouts/Layout.astro";
@@ -136,33 +136,6 @@ repoSummaries.sort(compareByKey);
 <Layout title="Browser Spec Maintenance Status">
     <main>
         <h1>Browser Spec Maintenance Status</h1>
-
-        <p>For now, this page sets SLOs of:</p>
-        <ul>
-            <li>
-                {triageSLO.days} days to triage an issue. An issue counts as triaged
-                if any of the "Priority" or "Agenda+" <a
-                    href={`${import.meta.env.BASE_URL}triage-labels`}
-                    >triage labels</a
-                > are applied. If a repository doesn't have the
-                <GhLabel {...ghLabels.eventually} /> label created, an issue counts
-                as triaged once it's assigned to a milestone or someone other than
-                the original author comments.
-            </li>
-            <li>
-                {urgentSLO.days} days to close a <GhLabel
-                    {...ghLabels.urgent}
-                /> issue.
-            </li>
-            <li>
-                {soonSLO.days} days to close a <GhLabel {...ghLabels.soon} /> issue.
-            </li>
-            <li>
-                {agendaSLO.days} days to have a discussion about an <GhLabel
-                    {...ghLabels.agenda}
-                /> issue.
-            </li>
-        </ul>
 
         <p>Across all browser specs, we have:</p>
         <ul>
