@@ -10,13 +10,12 @@ const darkBg =
     Color.contrastAPCA(color, "white") + Color.contrastAPCA(color, "black") < 0;
 ---
 
-<span class="label" style=`--bg: ${color}` class:list={{ darkBg }}>{name}</span>
-
-<style is:global>
+<span class="label" style=`--bg: ${color}` class:list={{ darkBg }}>{name}</span
+><style is:global>
     .label {
         background-color: var(--bg);
-        padding: 0 .5lh;
-        border-radius: .5lh;
+        padding: 0 0.5lh;
+        border-radius: 0.5lh;
     }
     .label.darkBg {
         color: white;
