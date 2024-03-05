@@ -1,53 +1,8 @@
 ---
-import GhLabel from "@components/GhLabel.astro";
-import { Temporal } from "@js-temporal/polyfill";
-import { agendaSLO, soonSLO, urgentSLO } from "@lib/slo";
-import * as ghLabels from "@lib/triage-labels.js";
 import Layout from "../layouts/Layout.astro";
-
-const today = Temporal.Now.plainDateISO();
 ---
 
 <Layout title="Triage Labels">
-    <main>
-        <p>
-            This summary relies on repository maintainers using a particular set
-            of labels to triage issues. These are:
-        </p>
-
-        <dl>
-            <dt><GhLabel {...ghLabels.urgent} /></dt>
-            <dd>
-                Needs to be resolved more quickly than other issues. These
-                issues and PRs are expected to be resolved within {
-                    urgentSLO.days
-                } days.
-            </dd>
-            <dt><GhLabel {...ghLabels.soon} /></dt>
-            <dd>
-                Needs to be resolved within a reasonable timeframe, but not as
-                quickly as urgent issues. These issues and PRs are expected to
-                be resolved within {
-                    soonSLO.round({ smallestUnit: "month", relativeTo: today }).months
-                } months.
-            </dd>
-            <dt><GhLabel {...ghLabels.eventually} /></dt>
-            <dd>Doesn't need to be resolved within a particular time limit.</dd>
-            <dt><GhLabel {...ghLabels.needsFeedback} /></dt>
-            <dd>
-                The person who reported the issue needs to answer a question
-                before progress can be made. The SLO clock doesn't advance
-                between when this label is set and when the reporter replies.
-            </dd>
-            <dt><GhLabel {...ghLabels.agenda} /></dt>
-            <dd>
-                The issue needs a real-time discussion, often at a working group
-                meeting. These issues and PRs are expected to be discussed
-                within {
-                    agendaSLO.round({ smallestUnit: "week", relativeTo: today }).weeks
-                } weeks, at which point the label will be removed, but the issue
-                won't necessarily be closed.
-            </dd>
-        </dl>
-    </main>
+    <meta http-equiv="refresh" content={`0; url=${import.meta.env.BASE_URL}about`}>
+    <p>The content here has moved to the <a href={`${import.meta.env.BASE_URL}about`}>About</a> page.</p>
 </Layout>

@@ -87,12 +87,11 @@ import Layout from "../layouts/Layout.astro";
                 >Service Level Indicator</a
             > for priorities (the amount of time that gets compared to the SLO) is
             the total amount of time the issue has had that priority or a higher
-            one applied, except while the <GhLabel
+            one applied. When someone adds the <GhLabel
                 {...ghLabels.needsFeedback}
             />
-            label marks that the issue is waiting on a response from the person who
-            filed it. The SLI for a PR also stops advancing while the PR is marked
-            as a <a
+            label, the SLI stops advancing until the issue author replies. The SLI
+            for a PR also stops advancing while the PR is marked as a <a
                 href="https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests#draft-pull-requests"
                 >draft</a
             >.
@@ -100,7 +99,7 @@ import Layout from "../layouts/Layout.astro";
 
         <h2 id="properties">Other properties</h2>
         <dl>
-            <dt>On the agenda</dt>
+            <dt id="agenda">On the agenda</dt>
             <dd>
                 An issue labeled <GhLabel {...ghLabels.agenda} /> should be discussed
                 and have the label removed within <b
