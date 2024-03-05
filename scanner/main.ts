@@ -59,7 +59,7 @@ async function analyzeRepo(org: string, repoName: string, globalStats: GlobalSta
         author: issue.author?.login,
         createdAt: issue.createdAt,
         sloTimeUsed: Temporal.Duration.from({ seconds: 0 }),
-        whichSlo: whichSlo(issue),
+        whichSlo: whichSlo(repo.nameWithOwner, issue),
         onAgendaFor: countAgendaTime(issue, now),
         labels: issue.labels.nodes.map(label => label.name),
         stats: {

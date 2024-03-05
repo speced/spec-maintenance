@@ -2,6 +2,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import { SloType } from '@lib/repo-summaries.js';
 import assert from "node:assert";
 import type { IssueOrPr, Repository } from "./github.js";
+import { hasTriagePredicate, isTriaged } from "./per-repo.js";
 
 const PRIORITY_URGENT = "priority: urgent";
 const PRIORITY_SOON = "priority: soon";
@@ -12,19 +13,21 @@ export function NeedsReporterFeedback(label: string) {
   return label.toLowerCase() === NEEDS_REPORTER_FEEDBACK;
 }
 
-/** Returns whether `repo` has enough labels to mark bugs as triaged.
+/** Returns whether `repo` has enough labels or configuration to mark bugs as triaged.
  *
  * Because different repositories will adopt different subsets of the labels this tool recognizes,
  * we should only look for the smallest subset that indicates the repo isn't relying on the triage
  * heuristics. For now, that's just the `Priority: Eventually` label.
+ *
+ * It's also possible to define a custom isTriaged predicate for each repository.
  */
-export function hasLabels(repo: Pick<Repository, 'labels'>): boolean {
-  return repo.labels.nodes.some(labelNode => labelNode.name === PRIORITY_EVENTUALLY);
+export function hasLabels(repo: Pick<Repository, 'nameWithOwner' | 'labels'>): boolean {
+  return hasTriagePredicate(repo.nameWithOwner) || repo.labels.nodes.some(labelNode => labelNode.name === PRIORITY_EVENTUALLY);
 }
 
-export function whichSlo(issue: Pick<IssueOrPr, 'labels' | 'isDraft'>): SloType {
+export function whichSlo(repoNameWithOwner: string, issue: Pick<IssueOrPr, 'labels' | 'isDraft'>): SloType {
   const labels: string[] = issue.labels.nodes.map(label => label.name.toLowerCase());
-  if (issue.isDraft || labels.includes(PRIORITY_EVENTUALLY) || labels.includes(NEEDS_REPORTER_FEEDBACK)) {
+  if (issue.isDraft || labels.includes(NEEDS_REPORTER_FEEDBACK)) {
     return "none";
   }
   if (labels.includes(PRIORITY_URGENT)) {
@@ -32,6 +35,9 @@ export function whichSlo(issue: Pick<IssueOrPr, 'labels' | 'isDraft'>): SloType 
   }
   if (labels.includes(PRIORITY_SOON)) {
     return "soon";
+  }
+  if (labels.includes(PRIORITY_EVENTUALLY) || isTriaged(repoNameWithOwner, issue)) {
+    return "none";
   }
   return "triage";
 }

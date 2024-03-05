@@ -329,6 +329,7 @@ export async function fetchAllComments(needAllComments: IssueOrPr[], needEarlyCo
 }
 
 const Repository = z.object({
+  nameWithOwner: z.string(),
   labels: z.object({
     totalCount: z.number(),
     nodes: z.array(z.object({
@@ -346,6 +347,7 @@ export async function getRepo(org, repo): Promise<Repository> {
   const result = RepositoryQueryResult.parse(await octokit.graphql(
     gql(`query ($owner: String!, $repoName: String!) {
       repository(owner: $owner, name: $repoName) {
+        nameWithOwner
         labels(first: 100, query: "Priority") {
           totalCount
           nodes {
