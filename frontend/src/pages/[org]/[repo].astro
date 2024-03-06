@@ -3,6 +3,7 @@ import Duration from "@components/Duration.astro";
 import GhLabel from "@components/GhLabel.astro";
 import Issue from "@components/Issue.astro";
 import Layout from "@layouts/Layout.astro";
+import { englishUtcFormatter } from "@lib/formatTime.js";
 import { IssueSummary } from "@lib/repo-summaries";
 import {
 agendaLengthSLO,
@@ -56,12 +57,24 @@ untriaged.push(...triageViolations);
 untriaged.sort(cmpByTimeUsed);
 ---
 
+<script>
+    import "@components/local-time.js";
+</script>
+
 <Layout title={`${org}/${repo} Issues`}>
     <h1>
         <a href=`https://github.com/${org}/${repo}/issues`
             >{org}/{repo} Issues</a
         >
     </h1>
+
+    <p>
+        Last updated <local-time datetime={details.cachedAt}
+            >{
+                englishUtcFormatter.format(new Date(details.cachedAt))
+            }</local-time
+        >.
+    </p>
 
     {
         details.labelsPresent ? null : (

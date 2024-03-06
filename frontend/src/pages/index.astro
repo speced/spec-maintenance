@@ -1,12 +1,27 @@
 ---
 import GhLabel from "@components/GhLabel.astro";
+import { englishUtcFormatter } from "@lib/formatTime";
 import { IssueSummary } from "@lib/repo-summaries";
 import { agendaLengthSLO, groupBySlo } from "@lib/slo";
 import * as ghLabels from "@lib/triage-labels";
 import { getCollection } from "astro:content";
+import assert from "node:assert";
 import Layout from "../layouts/Layout.astro";
 
 const repos = await getCollection("github");
+
+let oldestCache: Date;
+let newestCache = (oldestCache = new Date(repos[0].data.cachedAt));
+for (const repo of repos) {
+    const repoCachedAt = new Date(repo.data.cachedAt);
+    if (repoCachedAt < oldestCache) {
+        oldestCache = repoCachedAt;
+    }
+    if (repoCachedAt > newestCache) {
+        newestCache = repoCachedAt;
+    }
+}
+assert(oldestCache <= newestCache);
 
 let totalTriageViolations = 0;
 let totalUrgentViolations = 0;
@@ -153,9 +168,23 @@ function compareByKey(
 repoSummaries.sort(compareByKey);
 ---
 
+<script>
+    import "@components/local-time.js";
+</script>
+
 <Layout title="Browser Spec Maintenance Status">
     <main>
         <h1>Browser Spec Maintenance Status</h1>
+
+        <p>
+            Last updated <local-time
+                frdom={oldestCache.toISOString()}
+                to={newestCache.toISOString()}
+                >{
+                    englishUtcFormatter.formatRange(oldestCache, newestCache)
+                }</local-time
+            >.
+        </p>
 
         <p>Across all browser specs, we have:</p>
         <ul>
@@ -193,8 +222,8 @@ repoSummaries.sort(compareByKey);
             {
                 totalGroupsOverAgendaLimit > 0 ? (
                     <li class="warning">
-                        {totalGroupsOverAgendaLimit} group(s) with too many issues
-                        on the agenda
+                        {totalGroupsOverAgendaLimit} group(s) with too many
+                        issues on the agenda
                     </li>
                 ) : null
             }
