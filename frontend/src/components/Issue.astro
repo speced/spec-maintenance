@@ -1,48 +1,46 @@
 ---
 import { formatRoundAge } from "@lib/formatRoundAge";
 import type { IssueSummary } from "@lib/repo-summaries";
-import { agendaSLO, slo, sloMap } from "@lib/slo";
+import { slo } from "@lib/slo";
 import assert from "node:assert";
 
 interface Props {
     issue: IssueSummary;
-    // Show the issue's time on the agenda rather than its prioritized SLO time.
-    agenda?: boolean;
+    // Show the issue's time in a particular category rather than its prioritized SLO time.
+    category?: "agenda" | "needsEdits";
 }
-const { issue, agenda } = Astro.props;
+const { issue, category } = Astro.props;
 
-const { withinSlo, onAgendaTooLong } = slo(issue);
+const { withinSlo, untilSlo, categories } = slo(issue);
+
+const categoryInfo = category && categories[category];
 
 const timeToReport = (function () {
-    if (agenda) {
-        assert(issue.onAgendaFor);
-        if (onAgendaTooLong) {
-            return issue.onAgendaFor.subtract(agendaSLO);
+    if (categoryInfo) {
+        if (categoryInfo.untilSlo.sign > 0) {
+            return categoryInfo.timeUsed;
         }
-        return issue.onAgendaFor;
+        return categoryInfo.untilSlo.negated();
     } else {
         if (withinSlo) {
             return issue.sloTimeUsed;
         } else {
-            if (issue.whichSlo === "none") {
-                throw new Error(
-                    `Can't be out of SLO with a 'none' SLO type: ${JSON.stringify(
-                        issue
-                    )}`
-                );
-            }
-            return issue.sloTimeUsed.subtract(sloMap[issue.whichSlo]);
+            assert.notStrictEqual(issue.whichSlo, "none");
+            assert(untilSlo);
+            return untilSlo.negated();
         }
     }
 })();
 ---
 
 <a href={issue.url}>{issue.title}</a>: {
-    agenda ? (
-        onAgendaTooLong ? (
+    categoryInfo ? (
+        categoryInfo.untilSlo.sign !== 1 ? (
             <span class="error">out of SLO</span>
-        ) : (
+        ) : category === "agenda" ? (
             "on the agenda"
+        ) : (
+            "has needed edits"
         )
     ) : withinSlo ? (
         "on maintainers' plate"

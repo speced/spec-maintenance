@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import { IssueSummary, RepoSummary } from '../frontend/src/lib/repo-summaries.js';
 import { browserSpecs } from "./browser-specs.js";
 import { IssueOrPr, fetchAllComments, getRepo, logRateLimit } from "./github.js";
-import { NeedsReporterFeedback, countAgendaTime, countSloTime, hasLabels, whichSlo } from "./slo.js";
+import { NeedsReporterFeedback, countLabeledTime, countSloTime, hasLabels, whichSlo } from "./slo.js";
 import config from './third_party/config.cjs';
 
 interface GlobalStatsInput {
@@ -60,7 +60,8 @@ async function analyzeRepo(org: string, repoName: string, globalStats: GlobalSta
         createdAt: issue.createdAt,
         sloTimeUsed: Temporal.Duration.from({ seconds: 0 }),
         whichSlo: whichSlo(repo.nameWithOwner, issue),
-        onAgendaFor: countAgendaTime(issue, now),
+        onAgendaFor: countLabeledTime(issue, 'agenda', now),
+        neededEditsFor: countLabeledTime(issue, 'needsEdits', now),
         labels: issue.labels.nodes.map(label => label.name),
         stats: {
           numTimelineItems: issue.timelineItems.totalCount,

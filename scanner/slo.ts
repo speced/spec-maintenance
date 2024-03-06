@@ -8,10 +8,16 @@ const PRIORITY_URGENT = "priority: urgent";
 const PRIORITY_SOON = "priority: soon";
 const PRIORITY_EVENTUALLY = "priority: eventually";
 const AGENDA = "agenda+";
+const NEEDS_EDITS = "needs edits";
 const NEEDS_REPORTER_FEEDBACK = "needs reporter feedback";
 export function NeedsReporterFeedback(label: string) {
   return label.toLowerCase() === NEEDS_REPORTER_FEEDBACK;
 }
+
+const sloLabels = {
+  agenda: AGENDA,
+  needsEdits: NEEDS_EDITS,
+} as const;
 
 /** Returns whether `repo` has enough labels or configuration to mark bugs as triaged.
  *
@@ -141,25 +147,27 @@ export function countSloTime(
 
 
 /**
- * Returns how long `issue` has been on the agenda, or `undefined` if it's not on the agenda.
+ * Returns how long `issue` has had a given label, or `undefined` if it doesn't have that label.
  *
- * This counts from the most recent time that the Agenda+ label was added, since an issue can be
- * added to the agenda multiple times, and it's not "late" this time just because the previous time
- * took a while to handle.
+ * This counts from the most recent time that the label was added, since an issue can get this sort
+ * of property multiple times, and it's not "late" this time just because the previous time took a
+ * while to handle.
  */
-export function countAgendaTime(issue: Pick<IssueOrPr, 'url' | 'labels' | 'timelineItems'>,
+export function countLabeledTime(issue: Pick<IssueOrPr, 'url' | 'labels' | 'timelineItems'>,
+  labelId: keyof typeof sloLabels,
   now: Temporal.Instant): undefined | Temporal.Duration {
-  if (!issue.labels.nodes.some(label => label.name.toLowerCase() === AGENDA)) {
+  const labelName = sloLabels[labelId]
+  if (!issue.labels.nodes.some(label => label.name.toLowerCase() === labelName)) {
     return undefined;
   }
-  const agendaAddEvent = issue.timelineItems.nodes.findLast(timelineItem =>
+  const labelAddEvent = issue.timelineItems.nodes.findLast(timelineItem =>
     timelineItem.__typename === 'LabeledEvent' &&
-    timelineItem.label.name.toLowerCase() === AGENDA);
-  if (agendaAddEvent === undefined) {
+    timelineItem.label.name.toLowerCase() === labelName);
+  if (labelAddEvent === undefined) {
     throw new Error(
-      `Issue ${issue.url} has an Agenda+ label but no timeline item adding that label.`,
+      `Issue ${issue.url} has the '${labelName}' label but no timeline item adding that label.`,
       { cause: issue });
   }
-  assert.strictEqual(agendaAddEvent.__typename, 'LabeledEvent');
-  return agendaAddEvent.createdAt.until(now).round({ largestUnit: 'days' });
+  assert.strictEqual(labelAddEvent.__typename, 'LabeledEvent');
+  return labelAddEvent.createdAt.until(now).round({ largestUnit: 'days' });
 }

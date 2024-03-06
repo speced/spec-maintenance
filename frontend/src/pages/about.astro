@@ -4,6 +4,7 @@ import GhLabel from "@components/GhLabel.astro";
 import {
 agendaLengthSLO,
 agendaSLO,
+editsSLO,
 soonSLO,
 triageSLO,
 urgentSLO,
@@ -21,21 +22,21 @@ import Layout from "../layouts/Layout.astro";
                 >browser-specs</a
             > and finds issues and PRs that have been waiting for action for longer
             than they should have. (We generally use "issue" to refer to both issues
-            and PRs.) We infer a priority for each issue. Issues can also have a
-            few other properties like "being on a WG's agenda" or "needing their
-            resolution to be edited into the specification".
+            and PRs.) We infer a priority for each issue. Issues can also be in a
+            few <a href="#categories">other categories</a> like "being on a WG's
+            agenda" or "needing their resolution to be edited into the specification".
         </p>
         <p>
             We then assign <a
                 href="https://en.wikipedia.org/wiki/Service-level_objective"
                 >Service Level Objectives</a
-            > (SLOs) depending on the priority or other properties. For a priority,
-            the target is generally resolving the whole issue, while for the other
-            properties, it's just to resolve that particular property. Generally
-            a specification's working group or editors are responsible for making
-            sure issues are resolved within their SLOs, but it's important to note
-            that <b>there are no consequences</b> for violating an SLO. The issue
-            just gets listed in the appropriate place on this website.
+            > (SLOs) depending on the priority or membership in other categories.
+            For a priority, the target is generally resolving the whole issue, while
+            for the other categories, it's just leaving that particular category.
+            Generally a specification's working group or editors are responsible
+            for making sure issues are resolved within their SLOs, but it's important
+            to note that <b>there are no consequences</b> for violating an SLO. The
+            issue just gets listed in the appropriate place on this website.
         </p>
         <h2 id="priorities">Priorities</h2>
         <dl>
@@ -103,25 +104,35 @@ import Layout from "../layouts/Layout.astro";
             >.
         </p>
 
-        <h2 id="properties">Other properties</h2>
+        <h2 id="categories">Other categories</h2>
+        <p>
+            The <a href="https://en.wikipedia.org/wiki/Service_level_indicator"
+                ><abbr title="Service Level Indicator">SLI</abbr></a
+            > for handling category membership only counts the current application of this
+            label, unlike priorities which include previous times their label was
+            added and then removed.
+        </p>
         <dl>
             <dt id="agenda">On the agenda</dt>
             <dd>
                 <p>
                     An issue labeled <GhLabel {...ghLabels.agenda} /> should be discussed
                     and have the label removed within <b
-                        ><Duration d={agendaSLO} /></b
-                    >. The <a
-                        href="https://en.wikipedia.org/wiki/Service_level_indicator"
-                        ><abbr title="Service Level Indicator">SLI</abbr></a
-                    > for handling agenda items only counts the current application
-                    of this label, unlike priorities which include previous times
-                    their label was added and then removed.
+                        ><Duration d={agendaSLO} weeks /></b
+                    >.
                 </p>
                 <p>
                     Groups should have enough meetings to keep their agendas
-                    below {agendaLengthSLO} items.
+                    below <b>{agendaLengthSLO} items</b>.
                 </p>
+            </dd>
+            <dt id="needs-edits">Needs edits</dt>
+            <dd>
+                An issue labeled <GhLabel {...ghLabels.needsEdits} /> has a decision
+                recorded in the issue and needs a spec editor to apply that decision
+                to the specification. This should happen within <b
+                    ><Duration d={editsSLO} weeks /></b
+                >.
             </dd>
         </dl>
     </main>

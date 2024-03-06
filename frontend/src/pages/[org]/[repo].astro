@@ -8,7 +8,9 @@ import {
 agendaLengthSLO,
 agendaSLO,
 cmpByAgendaUsed,
+cmpByNeededEditsFor,
 cmpByTimeUsed,
+editsSLO,
 groupBySlo,
 soonSLO,
 triageSLO,
@@ -41,6 +43,8 @@ const {
     triageViolations,
     agenda,
     agendaViolations,
+    needsEdits,
+    needsEditsViolations,
     soon,
     soonViolations,
     urgent,
@@ -52,6 +56,8 @@ soon.push(...soonViolations);
 soon.sort(cmpByTimeUsed);
 agenda.push(...agendaViolations);
 agenda.sort(cmpByAgendaUsed);
+needsEdits.push(...needsEditsViolations);
+needsEdits.sort(cmpByNeededEditsFor);
 untriaged.push(...triageViolations);
 untriaged.sort(cmpByTimeUsed);
 ---
@@ -94,6 +100,17 @@ untriaged.sort(cmpByTimeUsed);
                         {urgentViolations.length
                             ? `${urgentViolations.length} out-of-SLO urgent issues`
                             : `${urgent.length} urgent issues`}
+                    </a>
+                </li>
+            ) : null
+        }
+        {
+             needsEdits.length > 0 ? (
+                <li>
+                    <a href="#need-edits">
+                        {needsEditsViolations.length
+                            ? `${needsEditsViolations.length} issues with out-of-SLO pending edits`
+                            : `${needsEdits.length} issues with pending edits`}
                     </a>
                 </li>
             ) : null
@@ -169,6 +186,28 @@ untriaged.sort(cmpByTimeUsed);
     }
 
     {
+        needsEdits.length > 0 ? (
+            <>
+                <h2 id="need-edits">Need Edits</h2>
+                <p>
+                    Try to apply the
+                    {/* prettier-ignore */}
+                    <a href={`${import.meta.env.BASE_URL}about#needs-edits`}>edits
+                        requested in these issues</a>
+                    within <Duration d={editsSLO} weeks />.
+                </p>
+                <ul>
+                    {needsEdits.map((issue) => (
+                        <li>
+                            <Issue {issue} category="needsEdits" />
+                        </li>
+                    ))}
+                </ul>
+            </>
+        ) : null
+    }
+
+    {
         agenda.length > 0 ? (
             <>
                 <h2 id="agenda">Agenda</h2>
@@ -183,7 +222,7 @@ untriaged.sort(cmpByTimeUsed);
                 <ul>
                     {agenda.map((issue) => (
                         <li>
-                            <Issue {issue} agenda />
+                            <Issue {issue} category="agenda" />
                         </li>
                     ))}
                 </ul>
