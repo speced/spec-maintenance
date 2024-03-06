@@ -14,7 +14,17 @@ const { title } = Astro.props;
         <meta name="generator" content={Astro.generator} />
         <title>{title}</title>
         <style is:global>
-            body {max-width: 50em;}
+            body {
+                max-width: 50em;
+            }
+            :is(li, dd) {
+                & > p:first-child {
+                    margin-top: 0;
+                }
+                & > p:last-child {
+                    margin-bottom: 0;
+                }
+            }
         </style>
     </head>
     <body>
