@@ -1,7 +1,7 @@
 ---
 import GhLabel from "@components/GhLabel.astro";
 import { IssueSummary } from "@lib/repo-summaries";
-import { groupBySlo } from "@lib/slo";
+import { agendaLengthSLO, groupBySlo } from "@lib/slo";
 import * as ghLabels from "@lib/triage-labels";
 import { getCollection } from "astro:content";
 import Layout from "../layouts/Layout.astro";
@@ -17,6 +17,7 @@ let totalUrgent = 0;
 let totalSoon = 0;
 let totalAgenda = 0;
 let totalOther = 0;
+let totalGroupsOverAgendaLimit = 0;
 
 const andFormatter = new Intl.ListFormat("en", {
     style: "long",
@@ -45,21 +46,34 @@ const repoSummaries = repos.map((repo) => {
     totalSoon += soon;
     totalAgenda += agenda;
     totalOther += other;
+    if (agenda + agendaViolations > agendaLengthSLO) {
+        totalGroupsOverAgendaLimit++;
+    }
 
     let message: string[] = [];
+    let class_ = "";
     if (triageViolations > 0 || urgentViolations > 0) {
+        class_ = "error";
         if (triageViolations > 0) {
             message.push(`${triageViolations} triage SLO violations`);
         }
         if (urgentViolations > 0) {
             message.push(`${urgentViolations} urgent SLO violations`);
         }
-    } else if (soonViolations > 0 || agendaViolations > 0) {
+    } else if (
+        soonViolations > 0 ||
+        agendaViolations > 0 ||
+        agenda + agendaViolations > agendaLengthSLO
+    ) {
+        class_ = "warning";
         if (soonViolations > 0) {
             message.push(`${soonViolations} soon SLO violations`);
         }
         if (agendaViolations > 0) {
             message.push(`${agendaViolations} agenda SLO violations`);
+        }
+        if (agenda + agendaViolations > agendaLengthSLO) {
+            message.push(`${agenda + agendaViolations} issues on the agenda`);
         }
     } else if (needTriage > 0 || urgent > 0) {
         if (needTriage > 0) {
@@ -87,12 +101,7 @@ const repoSummaries = repos.map((repo) => {
         soon,
         agenda,
         other,
-        class_:
-            triageViolations > 0 || urgentViolations > 0
-                ? "error"
-                : soonViolations > 0 || agendaViolations > 0
-                  ? "warning"
-                  : "",
+        class_,
         message: andFormatter.format(message),
     });
 });
@@ -106,10 +115,21 @@ function sortKey(summary: (typeof repoSummaries)[0]): {
             priority: 4,
             count: summary.triageViolations + summary.urgentViolations,
         };
-    } else if (summary.soonViolations > 0 || summary.agendaViolations > 0) {
+    } else if (
+        summary.soonViolations > 0 ||
+        summary.agendaViolations > 0 ||
+        summary.agenda + summary.agendaViolations > agendaLengthSLO
+    ) {
+        let agendaIfTooMany = 0;
+        if (summary.agenda + summary.agendaViolations > agendaLengthSLO) {
+            agendaIfTooMany = summary.agenda;
+        }
         return {
             priority: 3,
-            count: summary.soonViolations + summary.agendaViolations,
+            count:
+                summary.soonViolations +
+                summary.agendaViolations +
+                agendaIfTooMany,
         };
     } else if (summary.needTriage > 0 || summary.urgent > 0) {
         return { priority: 2, count: summary.needTriage + summary.urgent };
@@ -171,6 +191,14 @@ repoSummaries.sort(compareByKey);
                 ) : null
             }
             {
+                totalGroupsOverAgendaLimit > 0 ? (
+                    <li class="warning">
+                        {totalGroupsOverAgendaLimit} group(s) with too many issues
+                        on the agenda
+                    </li>
+                ) : null
+            }
+            {
                 totalNeedTriage > 0 ? (
                     <li>{totalNeedTriage} issues that need triage</li>
                 ) : null
@@ -192,7 +220,7 @@ repoSummaries.sort(compareByKey);
                         <dt>
                             <a href={`${repo.data.org}/${repo.data.repo}`}>
                                 {repo.data.org}/{repo.data.repo}
-                            </a>{" "}
+                            </a>
                             {repo.data.labelsPresent ? null : (
                                 <>
                                     (no <GhLabel {...ghLabels.eventually} />

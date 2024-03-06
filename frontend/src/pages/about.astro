@@ -1,7 +1,13 @@
 ---
 import Duration from "@components/Duration.astro";
 import GhLabel from "@components/GhLabel.astro";
-import { agendaSLO, soonSLO, triageSLO, urgentSLO } from "@lib/slo";
+import {
+agendaLengthSLO,
+agendaSLO,
+soonSLO,
+triageSLO,
+urgentSLO,
+} from "@lib/slo";
 import * as ghLabels from "@lib/triage-labels";
 import Layout from "../layouts/Layout.astro";
 ---
@@ -101,15 +107,21 @@ import Layout from "../layouts/Layout.astro";
         <dl>
             <dt id="agenda">On the agenda</dt>
             <dd>
-                An issue labeled <GhLabel {...ghLabels.agenda} /> should be discussed
-                and have the label removed within <b
-                    ><Duration d={agendaSLO} /></b
-                >. The <a
-                    href="https://en.wikipedia.org/wiki/Service_level_indicator"
-                    ><abbr title="Service Level Indicator">SLI</abbr></a
-                > for handling agenda items only counts the current application of
-                this label, unlike priorities which include previous times their
-                label was added and then removed.
+                <p>
+                    An issue labeled <GhLabel {...ghLabels.agenda} /> should be discussed
+                    and have the label removed within <b
+                        ><Duration d={agendaSLO} /></b
+                    >. The <a
+                        href="https://en.wikipedia.org/wiki/Service_level_indicator"
+                        ><abbr title="Service Level Indicator">SLI</abbr></a
+                    > for handling agenda items only counts the current application
+                    of this label, unlike priorities which include previous times
+                    their label was added and then removed.
+                </p>
+                <p>
+                    Groups should have enough meetings to keep their agendas
+                    below {agendaLengthSLO} items.
+                </p>
             </dd>
         </dl>
     </main>

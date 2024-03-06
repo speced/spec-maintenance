@@ -10,6 +10,9 @@ export const soonSLO = Temporal.Duration.from({ days: 91 });
 // once.
 export const agendaSLO = Temporal.Duration.from({ days: 35 });
 
+// Keep to at most 25 agenda items.
+export const agendaLengthSLO = 25;
+
 export const sloMap = {
     "urgent": urgentSLO,
     "soon": soonSLO,

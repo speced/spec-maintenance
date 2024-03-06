@@ -5,6 +5,7 @@ import Issue from "@components/Issue.astro";
 import Layout from "@layouts/Layout.astro";
 import { IssueSummary } from "@lib/repo-summaries";
 import {
+agendaLengthSLO,
 agendaSLO,
 cmpByAgendaUsed,
 cmpByTimeUsed,
@@ -101,9 +102,12 @@ untriaged.sort(cmpByTimeUsed);
             agenda.length > 0 ? (
                 <li>
                     <a href="#agenda">
-                        {agendaViolations.length
-                            ? `${agendaViolations.length} issues on the agenda that have been waiting too long`
-                            : `${agenda.length} issues on the agenda`}
+                        {agenda.length > agendaLengthSLO &&
+                        agendaViolations.length
+                            ? `${agenda.length} issues on the agenda, ${agendaViolations.length} of which have been waiting too long; consider scheduling more meetings`
+                            : agendaViolations.length
+                              ? `${agendaViolations.length} issues on the agenda that have been waiting too long`
+                              : `${agenda.length} issues on the agenda${agenda.length > agendaLengthSLO ? "; consider scheduling more meetings" : ""}`}
                     </a>
                 </li>
             ) : null
@@ -169,7 +173,8 @@ untriaged.sort(cmpByTimeUsed);
             <>
                 <h2 id="agenda">Agenda</h2>
                 <p>
-                    Try to discuss
+                    Try to maintain fewer than {agendaLengthSLO} agenda items
+                    and discuss
                     {/* prettier-ignore */}
                     <a href={`${import.meta.env.BASE_URL}about#agenda`}>issues
                         on the agenda</a>
