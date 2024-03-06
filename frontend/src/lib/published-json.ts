@@ -7,10 +7,12 @@ export const SummaryJson = z.object({}).catchall(z.object({
         urgentViolations: z.number(),
         soonViolations: z.number(),
         agendaViolations: z.number(),
+        needsEditsViolations: z.number(),
         needTriage: z.number(),
         urgent: z.number(),
         soon: z.number(),
         agenda: z.number(),
+        needsEdits: z.number(),
         other: z.number(),
     }));
 export type SummaryJson = z.infer<typeof SummaryJson>;
@@ -25,16 +27,19 @@ export const RepoJson = z.object({
         urgentViolations: z.number(),
         soonViolations: z.number(),
         agendaViolations: z.number(),
+        needsEditsViolations: z.number(),
         needTriage: z.number(),
         urgent: z.number(),
         soon: z.number(),
         agenda: z.number(),
+        needsEdits: z.number(),
         other: z.number(),
     }),
     triage: IssueSummaryWithSlo.array(),
     urgent: IssueSummaryWithSlo.array(),
     soon: IssueSummaryWithSlo.array(),
     agenda: IssueSummaryWithSlo.array(),
+    needsEdits: IssueSummaryWithSlo.array(),
     other: IssueSummaryWithSlo.array(),
 });
 export type RepoJson = z.infer<typeof RepoJson>;

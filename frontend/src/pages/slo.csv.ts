@@ -17,11 +17,13 @@ export const GET: APIRoute = async () => {
             'Need Triage': groups.untriaged.length,
             'Triage Violations': groups.triageViolations.length,
             'Agenda Violations': groups.agendaViolations.length,
+            'Editing Violations': groups.needsEditsViolations.length,
             Urgent: groups.urgent.length,
             'Urgent Violations': groups.urgentViolations.length,
             Soon: groups.soon.length,
             'Soon Violations': groups.soonViolations.length,
             Agenda: groups.agenda.length,
+            'Need Edits': groups.needsEdits.length,
             Other: groups.other.length,
         };
     });
