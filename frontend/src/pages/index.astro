@@ -178,7 +178,7 @@ repoSummaries.sort(compareByKey);
 
         <p>
             Last updated <local-time
-                frdom={oldestCache.toISOString()}
+                from={oldestCache.toISOString()}
                 to={newestCache.toISOString()}
                 >{
                     englishUtcFormatter.formatRange(oldestCache, newestCache)
