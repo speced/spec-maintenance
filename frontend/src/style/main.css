@@ -40,16 +40,6 @@ aside {
     font-style: italic;
 }
 
-p.annotation {
-    text-align: right;
-    text-align: end;
-    font-style: italic;
-}
-
-time {
-    font-style: italic;
-}
-
 dt {
     font-weight: bold;
 }
@@ -62,9 +52,14 @@ ul {
     list-style-type: circle;
 }
 
-code {
-    font: inherit;
-    font-style: italic;
+:is(li, dd) {
+    &>p:first-child {
+        margin-top: 0;
+    }
+
+    &>p:last-child {
+        margin-bottom: 0;
+    }
 }
 
 :link {
