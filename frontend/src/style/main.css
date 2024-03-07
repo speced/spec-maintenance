@@ -4,7 +4,7 @@ html {
     font-family: sans-serif;
     line-height: 1.5;
     max-width: 50em;
-    margin: 0.5em auto;
+    margin: 0.5em;
     padding: 0 0.5em;
 }
 
@@ -70,6 +70,28 @@ ul {
     color: navy;
 }
 
+/** Color coding for errors and warnings. */
+:not(td).error {
+    color: red;
+}
+
+:not(td).warning {
+    color: orange;
+}
+
+td.error {
+    background-color: lightpink;
+}
+
+td.warning {
+    background-color: #ffd280;
+}
+
+td.good {
+    background-color: palegreen;
+}
+
+
 
 /** Data tables (and properly marked-up index tables) *************************/
 /*
@@ -90,24 +112,26 @@ table {
     hyphens: manual;
 }
 
-table.data,
-table.index {
+table.data {
     margin: 1em auto;
     border-collapse: collapse;
     border: hidden;
     width: 100%;
 }
 
-table.data caption,
-table.index caption {
+table.data caption {
     max-width: 50em;
     margin: 0 auto 1em;
 }
 
+table.data thead {
+    position: sticky;
+    top: 0;
+    background-color: white;
+}
+
 table.data td,
-table.data th,
-table.index td,
-table.index th {
+table.data th {
     padding: 0.5em 1em;
     border-width: 1px;
     border-color: silver;
@@ -120,14 +144,11 @@ table.data thead td:empty {
 }
 
 table.data thead,
-table.index thead,
-table.data tbody,
-table.index tbody {
+table.data tbody {
     border-bottom: 2px solid;
 }
 
-table.data colgroup,
-table.index colgroup {
+table.data colgroup {
     border-left: 2px solid;
 }
 
@@ -142,8 +163,7 @@ table.data th[scope=rowgroup] {
     text-align: start;
 }
 
-table.data tbody th:first-child,
-table.index tbody th:first-child {
+table.data tbody th:first-child {
     border-right: 2px solid;
     border-top: 1px solid silver;
     padding-right: 1em;
@@ -163,6 +183,10 @@ table.data td.long {
 
 table.data img {
     vertical-align: middle;
+}
+
+table.data time {
+    white-space: nowrap;
 }
 
 

@@ -1,0 +1,34 @@
+---
+import type { IssueSummary } from "@lib/repo-summaries";
+import IssueRow from "./IssueRow.astro";
+
+interface Props {
+    issues: IssueSummary[];
+    // Show the issue's time in a particular category rather than its prioritized SLO time.
+    category?: "agenda" | "needsEdits";
+}
+
+const { issues, category } = Astro.props;
+---
+
+<table class="data">
+    <thead>
+        <tr>
+            <th>Issue</th>
+            <th>Title</th>
+            <th>Within SLO</th>
+            <th>
+                {
+                    category === "agenda"
+                        ? "On the agenda for"
+                        : category === "needsEdits"
+                          ? "Has needed edits for"
+                          : "On maintainers' plates for"
+                }
+            </th>
+            <th>Time left</th>
+            <th>Time past SLO</th>
+        </tr>
+    </thead>
+    {issues.map((issue) => <IssueRow {issue} {category} />)}
+</table>

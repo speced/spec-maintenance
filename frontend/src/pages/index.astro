@@ -1,11 +1,11 @@
 ---
-import GhLabel from "@components/GhLabel.astro";
 import { englishUtcFormatter } from "@lib/formatTime";
 import { IssueSummary } from "@lib/repo-summaries";
 import { agendaLengthSLO, groupBySlo } from "@lib/slo";
-import * as ghLabels from "@lib/triage-labels";
 import { getCollection } from "astro:content";
 import assert from "node:assert";
+import LinkIfNonzero from "../components/LinkIfNonzero.astro";
+import YesNoCell from "../components/YesNoCell.astro";
 import Layout from "../layouts/Layout.astro";
 
 const repos = await getCollection("github");
@@ -34,11 +34,6 @@ let totalAgenda = 0;
 let totalOther = 0;
 let totalGroupsOverAgendaLimit = 0;
 
-const andFormatter = new Intl.ListFormat("en", {
-    style: "long",
-    type: "conjunction",
-});
-
 const repoSummaries = repos.map((repo) => {
     const groups = groupBySlo(IssueSummary.array().parse(repo.data.issues));
 
@@ -65,47 +60,6 @@ const repoSummaries = repos.map((repo) => {
         totalGroupsOverAgendaLimit++;
     }
 
-    let message: string[] = [];
-    let class_ = "";
-    if (triageViolations > 0 || urgentViolations > 0) {
-        class_ = "error";
-        if (triageViolations > 0) {
-            message.push(`${triageViolations} triage SLO violations`);
-        }
-        if (urgentViolations > 0) {
-            message.push(`${urgentViolations} urgent SLO violations`);
-        }
-    } else if (
-        soonViolations > 0 ||
-        agendaViolations > 0 ||
-        agenda + agendaViolations > agendaLengthSLO
-    ) {
-        class_ = "warning";
-        if (soonViolations > 0) {
-            message.push(`${soonViolations} soon SLO violations`);
-        }
-        if (agendaViolations > 0) {
-            message.push(`${agendaViolations} agenda SLO violations`);
-        }
-        if (agenda + agendaViolations > agendaLengthSLO) {
-            message.push(`${agenda + agendaViolations} issues on the agenda`);
-        }
-    } else if (needTriage > 0 || urgent > 0) {
-        if (needTriage > 0) {
-            message.push(`${needTriage} issues that need triage`);
-        }
-        if (urgent > 0) {
-            message.push(`${urgent} urgent issues`);
-        }
-    } else if (soon > 0 || agenda > 0) {
-        if (soon > 0) {
-            message.push(`${soon} soon-priority issues`);
-        }
-        if (agenda > 0) {
-            message.push(`${agenda} issues on the agenda`);
-        }
-    }
-
     return Object.assign({}, repo, {
         triageViolations,
         urgentViolations,
@@ -116,8 +70,6 @@ const repoSummaries = repos.map((repo) => {
         soon,
         agenda,
         other,
-        class_,
-        message: andFormatter.format(message),
     });
 });
 
@@ -242,36 +194,116 @@ repoSummaries.sort(compareByKey);
             {totalOther > 0 ? <li>{totalOther} other issues</li> : null}
         </ul>
 
-        <dl>
+        <table class="data">
+            <thead>
+                <tr>
+                    <th rowspan="2">Repository</th>
+                    <th rowspan="2"
+                        ><a href={`${import.meta.env.BASE_URL}about#priorities`}
+                            >Labels present</a
+                        ></th
+                    >
+                    <th colspan="2">Issues that need triage</th>
+                    <th colspan="2">Urgent issues</th>
+                    <th colspan="2">Issues due soon</th>
+                    <th colspan="2">Agenda items</th>
+                    <th rowspan="2">Other issues</th>
+                </tr>
+                <tr>
+                    <th>Late</th>
+                    <th></th>
+                    <th>Late</th>
+                    <th></th>
+                    <th>Late</th>
+                    <th></th>
+                    <th>Late</th>
+                    <th></th>
+                </tr>
+            </thead>
             {
                 repoSummaries.map((repo) => (
-                    <>
-                        <dt>
+                    <tr>
+                        <th>
                             <a href={`${repo.data.org}/${repo.data.repo}`}>
                                 {repo.data.org}/{repo.data.repo}
                             </a>
-                            {repo.data.labelsPresent ? null : (
-                                <>
-                                    (no <GhLabel {...ghLabels.eventually} />
-                                    label; guessing triage status)
-                                </>
-                            )}
-                        </dt>
-                        <dd>
-                            <span class={repo.class_}>{repo.message}</span>
-                        </dd>
-                    </>
+                        </th>
+                        <YesNoCell value={repo.data.labelsPresent} />
+                        <td
+                            class={
+                                repo.triageViolations === 0 ? "good" : "error"
+                            }
+                        >
+                            <LinkIfNonzero
+                                href={`${repo.data.org}/${repo.data.repo}#untriaged`}
+                                value={repo.triageViolations}
+                            />
+                        </td>
+                        <td>
+                            <LinkIfNonzero
+                                href={`${repo.data.org}/${repo.data.repo}#untriaged`}
+                                value={repo.needTriage}
+                            />
+                        </td>
+                        <td
+                            class={
+                                repo.urgentViolations === 0 ? "good" : "error"
+                            }
+                        >
+                            <LinkIfNonzero
+                                href={`${repo.data.org}/${repo.data.repo}#urgent`}
+                                value={repo.urgentViolations}
+                            />
+                        </td>
+                        <td>
+                            <LinkIfNonzero
+                                href={`${repo.data.org}/${repo.data.repo}#urgent`}
+                                value={repo.urgent}
+                            />
+                        </td>
+                        <td
+                            class={
+                                repo.soonViolations === 0 ? "good" : "warning"
+                            }
+                        >
+                            <LinkIfNonzero
+                                href={`${repo.data.org}/${repo.data.repo}#soon`}
+                                value={repo.soonViolations}
+                            />
+                        </td>
+                        <td>
+                            <LinkIfNonzero
+                                href={`${repo.data.org}/${repo.data.repo}#soon`}
+                                value={repo.soon}
+                            />
+                        </td>
+                        <td
+                            class={
+                                repo.agendaViolations === 0 ? "good" : "warning"
+                            }
+                        >
+                            <LinkIfNonzero
+                                href={`${repo.data.org}/${repo.data.repo}#agenda`}
+                                value={repo.agendaViolations}
+                            />
+                        </td>
+                        <td
+                            class={
+                                repo.agendaViolations + repo.agenda <=
+                                agendaLengthSLO
+                                    ? "good"
+                                    : "warning"
+                            }
+                        >
+                            <LinkIfNonzero
+                                href={`${repo.data.org}/${repo.data.repo}#agenda`}
+                                value={repo.agenda}
+                            />
+                        </td>
+                        <td>{repo.other}</td>
+                    </tr>
                 ))
             }
-        </dl>
+        </table>
     </main>
 </Layout>
-
-<style is:global>
-    .error {
-        color: red;
-    }
-    .warning {
-        color: orange;
-    }
-</style>
