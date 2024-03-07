@@ -1,9 +1,13 @@
 import { IssueOrPr } from "./github.js";
 
+function cssTriagePredicate (issue: Pick<IssueOrPr, 'labels'>) {
+    return issue.labels.nodes.length > 0;
+}
+
 const triagePredicates: Record<`${string}/${string}`, (issue: Pick<IssueOrPr, 'labels'>) => boolean> = {
-    'w3c/csswg-drafts': function (issue: Pick<IssueOrPr, 'labels'>) {
-        return issue.labels.nodes.length > 0;
-    },
+    'w3c/css-houdini-drafts': cssTriagePredicate,
+    'w3c/csswg-drafts': cssTriagePredicate,
+    'w3c/fxtf-drafts': cssTriagePredicate,
 };
 
 // True if this repository has configured a custom function to say whether an issue is triaged
