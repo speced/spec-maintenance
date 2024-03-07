@@ -1,0 +1,42 @@
+---
+import { formatRoundAge } from "@lib/formatRoundAge";
+import type { IssueSummary } from "@lib/repo-summaries";
+import { slo } from "@lib/slo";
+import { assert } from "console";
+import YesNoCell from "./YesNoCell.astro";
+
+interface Props {
+    issue: IssueSummary;
+    // Show the issue's time in a particular category rather than its prioritized SLO time.
+    category?: "agenda" | "needsEdits";
+}
+const { issue, category } = Astro.props;
+
+const {
+    withinSlo: withinPrioritySlo,
+    untilSlo: untilPrioritySlo,
+    categories,
+} = slo(issue);
+
+const categoryInfo = category && categories[category];
+
+const { withinSlo, timeUsed, untilSlo } = categoryInfo
+    ? { ...categoryInfo, withinSlo: categoryInfo.untilSlo.sign > 0 }
+    : {
+          withinSlo: withinPrioritySlo,
+          timeUsed: issue.sloTimeUsed,
+          untilSlo: untilPrioritySlo,
+      };
+if (!withinSlo) {
+    assert(untilSlo);
+}
+---
+
+<tr>
+    <td><a href={issue.url}>#{issue.number}</a></td>
+    <td><a href={issue.url}>{issue.title}</a></td>
+    <YesNoCell value={withinSlo}/>
+    <td><time datetime={timeUsed.toJSON()}>{formatRoundAge(timeUsed)}</time></td>
+    <td>{untilSlo && untilSlo.sign > 0 ? <time datetime={untilSlo.toJSON()}>{formatRoundAge(untilSlo)}</time> : null}</td>
+    <td class={withinSlo ? '' : 'error'}>{untilSlo && untilSlo.sign <= 0 ? <time datetime={untilSlo.toJSON()}>{formatRoundAge(untilSlo.negated())}</time> : null}</td>
+</tr>

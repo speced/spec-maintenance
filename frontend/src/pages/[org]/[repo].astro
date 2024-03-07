@@ -1,7 +1,7 @@
 ---
 import Duration from "@components/Duration.astro";
 import GhLabel from "@components/GhLabel.astro";
-import Issue from "@components/Issue.astro";
+import IssueTable from "@components/IssueTable.astro";
 import Layout from "@layouts/Layout.astro";
 import { englishUtcFormatter } from "@lib/formatTime.js";
 import { IssueSummary } from "@lib/repo-summaries";
@@ -165,13 +165,7 @@ untriaged.sort(cmpByTimeUsed);
                     <a href={`${import.meta.env.BASE_URL}about#need-triage`}>triage</a>
                     issues within <Duration d={triageSLO} />.
                 </p>
-                <ul>
-                    {untriaged.map((issue) => (
-                        <li>
-                            <Issue {issue} />
-                        </li>
-                    ))}
-                </ul>
+                <IssueTable issues={untriaged} />
             </>
         ) : null
     }
@@ -187,13 +181,7 @@ untriaged.sort(cmpByTimeUsed);
                         issues</a>
                     within <Duration d={urgentSLO} />.
                 </p>
-                <ul>
-                    {urgent.map((issue) => (
-                        <li>
-                            <Issue {issue} />
-                        </li>
-                    ))}
-                </ul>
+                <IssueTable issues={urgent} />
             </>
         ) : null
     }
@@ -209,13 +197,7 @@ untriaged.sort(cmpByTimeUsed);
                         requested in these issues</a>
                     within <Duration d={editsSLO} weeks />.
                 </p>
-                <ul>
-                    {needsEdits.map((issue) => (
-                        <li>
-                            <Issue {issue} category="needsEdits" />
-                        </li>
-                    ))}
-                </ul>
+                <IssueTable issues={needsEdits} category="needsEdits" />
             </>
         ) : null
     }
@@ -232,13 +214,7 @@ untriaged.sort(cmpByTimeUsed);
                         on the agenda</a>
                     within <Duration d={agendaSLO} />.
                 </p>
-                <ul>
-                    {agenda.map((issue) => (
-                        <li>
-                            <Issue {issue} category="agenda" />
-                        </li>
-                    ))}
-                </ul>
+                <IssueTable issues={agenda} category="agenda" />
             </>
         ) : null
     }
@@ -254,13 +230,7 @@ untriaged.sort(cmpByTimeUsed);
                         issues</a>
                     within <Duration d={soonSLO} />.
                 </p>
-                <ul>
-                    {soon.map((issue) => (
-                        <li>
-                            <Issue {issue} />
-                        </li>
-                    ))}
-                </ul>
+                <IssueTable issues={soon} />
             </>
         ) : null
     }

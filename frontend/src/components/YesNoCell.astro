@@ -1,0 +1,8 @@
+---
+interface Props {
+    value: boolean;
+}
+const { value } = Astro.props;
+---
+
+{value ? <td title="Yes">✔</td> : <td title="No">❌</td>}
