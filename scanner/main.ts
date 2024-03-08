@@ -54,6 +54,7 @@ async function analyzeRepo(org: string, repoName: string, globalStats: GlobalSta
 
     for (const issue of allIssues) {
       const info: IssueSummary = {
+        number: issue.number,
         url: issue.url,
         title: issue.title,
         author: issue.author?.login,

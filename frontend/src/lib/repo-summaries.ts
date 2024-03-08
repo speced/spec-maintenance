@@ -6,6 +6,7 @@ export type SloType = z.infer<typeof SloType>;
 
 
 export const IssueSummaryInContent = z.object({
+    number: z.number(),
     url: z.string().url(),
     title: z.string(),
     author: z.string().optional(),
