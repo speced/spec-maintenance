@@ -1,9 +1,21 @@
 # Web Specification Maintenance
 
-This repository collects ideas for how we might track how well we're maintaining specifications, and
-identify specs that need more maintenance.
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/speced/spec-maintenance?quickstart=1)
 
-## Triage
+This repository holds a [tool](https://speced.github.io/spec-maintenance/) for tracking the maintenance of web specifications. To get started quickly:
+
+1. Click the Codespaces button above.
+1. Wait for the codespace to finish initializing.
+1. Run `pnpm dev` in the codespace's terminal.
+1. When VSCode reports that "Your application running on port 4321 is available", click the "Open in
+   Browser" button to see the server.
+
+## Research that motivated the design
+
+The current tool behavior is documented in an [About
+page](https://speced.github.io/spec-maintenance/about).
+
+### Triage
 
 All new issues (and PRs) need to get a priority assigned within a reasonable amount of time. To
 determine that amount of time, I looked at the distribution of the times it took issues to get their
@@ -22,7 +34,7 @@ I propose we set an SLO of 1 week to triage issues. If all issues took as long t
 to comment on, this would leave 26% of the 16731 open issues currently out of SLO. 20% of the 94591
 issues we've ever had have violated this SLO.
 
-## Priorities
+### Priorities
 
 I propose we define 3 priority levels, with labels `Priority: Urgent`, `Priority: Soon`, and
 `Priority: Eventually`. `Priority: Eventually` issues won't have an SLO. For the others, we can look

@@ -21,3 +21,7 @@ updates:
     groups:
       actions-org:
         patterns: ["actions/*"]
+  - package-ecosystem: "devcontainers"
+    directory: "/"
+    schedule:
+      interval: weekly

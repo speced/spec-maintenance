@@ -10,6 +10,7 @@ const config = {};
 
 program
   .option('--gh-token <token>', undefined, process.env["GITHUB_TOKEN"] || "missing-GitHub-token")
+  .option('--repos <list>', "if set, the comma-separated list of Github repositories to scan. e.g. 'w3c/webauthn,whatwg/html'", undefined)
   .option('--out-dir <directory>', "where to write scan results", "summaries");
 
 program.parse();
@@ -34,6 +35,7 @@ config.ghToken = options.ghToken;
 
 config.cache = config.cache || "https://labs.w3.org/github-cache";
 config.outDir = options.outDir;
+config.repos = options.repos && options.repos.split(',');
 
 // dump the configuration into the server log (but not in the server monitor!)
 console.log("".padStart(80, '-'));

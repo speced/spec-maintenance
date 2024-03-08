@@ -1,0 +1,37 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
+{
+    "name": "Spec Maintenance",
+    // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+    "image": "mcr.microsoft.com/devcontainers/typescript-node:1-20-bullseye",
+    // Features to add to the dev container. More info: https://containers.dev/features.
+    "features": {
+        "ghcr.io/devcontainers/features/github-cli": {}
+    },
+    // Use 'forwardPorts' to make a list of ports inside the container available locally.
+    // "forwardPorts": [],
+    // Enable pnpm once.
+    "onCreateCommand": "sudo corepack enable",
+    // Install dependencies during creation.
+    "updateContentCommand": "pnpm install",
+    // 'postCreateCommand' has access to user secrets like $GITHUB_TOKEN.
+    "postCreateCommand": "pnpm install && pnpm scan --repos w3c/csswg-drafts,whatwg/html,w3c/webauthn",
+    // Update the installed packages every time the container starts.
+    "postStartCommand": "pnpm install",
+    // Configure tool-specific properties.
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "astro-build.astro-vscode",
+                "bierner.lit-html",
+            ]
+        },
+        "codespaces": {
+            "openFiles": [
+                "README.md",
+            ]
+        }
+    },
+    // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+    // "remoteUser": "root"
+}
