@@ -121,7 +121,9 @@ repoSummaries.sort(compareByKey);
 ---
 
 <script>
+    // Astro formatting duplicates the first line if it's an import.
     import "@components/local-time.js";
+import "@lib/third_party/sorttable.js";
 </script>
 
 <Layout title="Browser Spec Maintenance Status">
@@ -194,7 +196,7 @@ repoSummaries.sort(compareByKey);
             {totalOther > 0 ? <li>{totalOther} other issues</li> : null}
         </ul>
 
-        <table class="data">
+        <table class="data sortable">
             <thead>
                 <tr>
                     <th rowspan="2">Repository</th>
