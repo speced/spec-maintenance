@@ -26,7 +26,7 @@
     "@octokit/plugin-throttling": "^9.0.3",
     "@octokit/request-error": "^6.0.2",
     "@webcomponents/template-shadowroot": "^0.2.1",
-    "astro": "^4.4.14",
+    "astro": "^4.4.15",
     "colorjs.io": "^0.5.0",
     "commander": "^12.0.0",
     "csv-stringify": "^6.4.6",
