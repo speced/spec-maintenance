@@ -47,6 +47,9 @@ dependencies:
   simple-statistics:
     specifier: ^7.8.3
     version: 7.8.3
+  sortable-tablesort:
+    specifier: ^3.2.2
+    version: 3.2.2
   zod:
     specifier: ^3.22.4
     version: 3.22.4
@@ -3479,6 +3482,10 @@ packages:
 
   /sisteransi@1.0.5:
     resolution: {integrity: sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==}
+    dev: false
+
+  /sortable-tablesort@3.2.2:
+    resolution: {integrity: sha512-rVjJoKhyk3wiLiEvMqtJYyJD2iDv+Wx9msSrAL7zcGZyYPztR4qH5pTXQTu0gSF+PqXkVekUlYx4mD79cr4UrQ==}
     dev: false
 
   /source-map-js@1.0.2:

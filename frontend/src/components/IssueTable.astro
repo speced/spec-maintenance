@@ -11,7 +11,11 @@ interface Props {
 const { issues, category } = Astro.props;
 ---
 
-<table class="data">
+<script>
+    import "sortable-tablesort/sortable.min.js";
+</script>
+
+<table class="data sortable">
     <thead>
         <tr>
             <th>Issue</th>
