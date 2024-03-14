@@ -10,7 +10,7 @@ import Layout from "@layouts/Layout.astro";
             .getAll("repos")
             .flatMap((value) => value.split(","));
         window.jsonFetches = repos.map((repoName) =>
-            fetch(`${import.meta.env.BASE_URL}${repoName}.json`)
+            fetch(`{import.meta.env.BASE_URL}${repoName}.json`)
         );
     </script>
     <nav>
@@ -50,7 +50,7 @@ import Layout from "@layouts/Layout.astro";
     import "@components/sm-issues-by-category";
 
     import type { IssuesByCategory } from "@components/sm-issues-by-category";
-import { RepoJson } from "@lib/published-json";
+    import { RepoJson } from "@lib/published-json";
 
     declare global {
         // Created in the inline script above.
