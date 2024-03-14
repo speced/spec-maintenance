@@ -2,6 +2,7 @@
 import Duration from "@components/Duration.astro";
 import GhLabel from "@components/GhLabel.astro";
 import IssueTable from "@components/IssueTable.astro";
+import TextButton from "@components/TextButton.astro";
 import Layout from "@layouts/Layout.astro";
 import { englishUtcFormatter } from "@lib/formatTime.js";
 import { IssueSummary } from "@lib/repo-summaries";
@@ -160,10 +161,11 @@ untriaged.sort(cmpByTimeUsed);
             <>
                 <h2 id="untriaged">Untriaged</h2>
                 <p>
-                    Try to
-                    {/* prettier-ignore */}
-                    <a href={`${import.meta.env.BASE_URL}about#need-triage`}>triage</a>
-                    issues within <Duration d={triageSLO} />.
+                    Try to triage issues within <Duration d={triageSLO} />.
+                    <TextButton
+                        href={`${import.meta.env.BASE_URL}about#need-triage`}
+                        label="More Info"
+                    />
                 </p>
                 <IssueTable issues={untriaged} />
             </>
@@ -175,11 +177,15 @@ untriaged.sort(cmpByTimeUsed);
             <>
                 <h2 id="urgent">Urgent</h2>
                 <p>
-                    Try to resolve
-                    {/* prettier-ignore */}
-                    <a href={`${import.meta.env.BASE_URL}about#urgent`}>urgent
-                        issues</a>
-                    within <Duration d={urgentSLO} />.
+                    Try to resolve issues within <Duration d={urgentSLO} />.
+                    <TextButton
+                        href={`${import.meta.env.BASE_URL}about#urgent`}
+                        label="More Info"
+                    />
+                    <TextButton
+                        href={`https://github.com/${org}/${repo}/issues?q=is%3Aopen+label%3A"Priority%3A+Urgent"+sort%3Aupdated-asc`}
+                        label="See these issues on Github"
+                    />
                 </p>
                 <IssueTable issues={urgent} />
             </>
@@ -191,11 +197,16 @@ untriaged.sort(cmpByTimeUsed);
             <>
                 <h2 id="need-edits">Need Edits</h2>
                 <p>
-                    Try to apply the
-                    {/* prettier-ignore */}
-                    <a href={`${import.meta.env.BASE_URL}about#needs-edits`}>edits
-                        requested in these issues</a>
-                    within <Duration d={editsSLO} weeks />.
+                    Try to apply the edits requested in these issues within
+                    <Duration d={editsSLO} weeks />.
+                    <TextButton
+                        href={`${import.meta.env.BASE_URL}about#needs-edits`}
+                        label="More Info"
+                    />
+                    <TextButton
+                        href={`https://github.com/${org}/${repo}/issues?q=is%3Aopen+label%3A"Needs+Edits"+sort%3Aupdated-asc`}
+                        label="See these issues on Github"
+                    />
                 </p>
                 <IssueTable issues={needsEdits} category="needsEdits" />
             </>
@@ -208,11 +219,16 @@ untriaged.sort(cmpByTimeUsed);
                 <h2 id="agenda">Agenda</h2>
                 <p>
                     Try to maintain fewer than {agendaLengthSLO} agenda items
-                    and discuss
-                    {/* prettier-ignore */}
-                    <a href={`${import.meta.env.BASE_URL}about#agenda`}>issues
-                        on the agenda</a>
-                    within <Duration d={agendaSLO} />.
+                    and discuss issues on the agenda within
+                    <Duration d={agendaSLO} />.
+                    <TextButton
+                        href={`${import.meta.env.BASE_URL}about#agenda`}
+                        label="More Info"
+                    />
+                    <TextButton
+                        href={`https://github.com/${org}/${repo}/issues?q=is%3Aopen+label%3A"Agenda%2B"+sort%3Aupdated-asc`}
+                        label="See these issues on Github"
+                    />
                 </p>
                 <IssueTable issues={agenda} category="agenda" />
             </>
@@ -224,11 +240,16 @@ untriaged.sort(cmpByTimeUsed);
             <>
                 <h2 id="soon">Soon</h2>
                 <p>
-                    Try to resolve
-                    {/* prettier-ignore */}
-                    <a href={`${import.meta.env.BASE_URL}about#soon`}>soon-priority
-                        issues</a>
-                    within <Duration d={soonSLO} />.
+                    Try to resolve soon-priority issues within
+                    <Duration d={soonSLO} />.
+                    <TextButton
+                        href={`${import.meta.env.BASE_URL}about#soon`}
+                        label="More Info"
+                    />
+                    <TextButton
+                        href={`https://github.com/${org}/${repo}/issues?q=is%3Aopen+label%3A"Priority%3A+Soon"+sort%3Aupdated-asc`}
+                        label="See these issues on Github"
+                    />
                 </p>
                 <IssueTable issues={soon} />
             </>

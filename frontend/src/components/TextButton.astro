@@ -1,0 +1,16 @@
+---
+interface Props {
+    href: string;
+    label?: string;
+}
+const { href, label } = Astro.props;
+---
+
+<span class="text-button">[ <a href={href}><slot>{label}</slot></a> ]</span>
+
+<style is:global>
+    .text-button {
+        white-space: nowrap;
+        /* Would prefer to use wrap-inside: avoid, but that's not shipped yet. */
+    }
+</style>
