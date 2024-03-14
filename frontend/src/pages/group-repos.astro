@@ -4,13 +4,13 @@ import Layout from "@layouts/Layout.astro";
 
 <Layout title="Your Group's Spec Maintenance Status">
     <!-- Inline to get the fetches going as early as possible. -->
-    <script is:inline>
+    <script is:inline data-base-url={import.meta.env.BASE_URL}>
         const params = new URLSearchParams(location.search);
         window.repos = params
             .getAll("repos")
             .flatMap((value) => value.split(","));
         window.jsonFetches = repos.map((repoName) =>
-            fetch(`{import.meta.env.BASE_URL}${repoName}.json`)
+            fetch(`${document.currentScript.dataset.baseUrl}${repoName}.json`)
         );
     </script>
     <nav>
