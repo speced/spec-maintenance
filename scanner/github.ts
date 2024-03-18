@@ -1,12 +1,12 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { Octokit as OctokitCore } from "@octokit/core";
-import { paginateGraphql } from "@octokit/plugin-paginate-graphql";
+import { paginateGraphQL } from "@octokit/plugin-paginate-graphql";
 import { throttling } from "@octokit/plugin-throttling";
 import { RequestError } from "@octokit/request-error";
 import { z } from "zod";
 import config from "./third_party/config.cjs";
 
-const Octokit = OctokitCore.plugin(throttling, paginateGraphql);
+const Octokit = OctokitCore.plugin(throttling, paginateGraphQL);
 function onRateLimit(limitName: string) {
   return (retryAfter, options: any, octokit, retryCount) => {
     octokit.log.warn(

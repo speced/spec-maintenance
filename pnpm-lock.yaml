@@ -15,8 +15,8 @@ dependencies:
     specifier: ^6.0.1
     version: 6.0.1
   '@octokit/plugin-paginate-graphql':
-    specifier: ^4.0.1
-    version: 4.0.1(@octokit/core@6.0.1)
+    specifier: ^5.1.0
+    version: 5.1.0(@octokit/core@6.0.1)
   '@octokit/plugin-throttling':
     specifier: ^9.0.3
     version: 9.0.3(@octokit/core@6.0.1)
@@ -759,11 +759,11 @@ packages:
     resolution: {integrity: sha512-EtqRBEjp1dL/15V7WiX5LJMIxxkdiGJnabzYx5Apx4FkQIFgAfKumXeYAqqJCj1s+BMX4cPFIFC4OLCR6stlnA==}
     dev: false
 
-  /@octokit/plugin-paginate-graphql@4.0.1(@octokit/core@6.0.1):
-    resolution: {integrity: sha512-R8ZQNmrIKKpHWC6V2gum4x9LG2qF1RxRjo27gjQcG3j+vf2tLsEfE7I/wRWEPzYMaenr1M+qDAtNcwZve1ce1A==}
+  /@octokit/plugin-paginate-graphql@5.1.0(@octokit/core@6.0.1):
+    resolution: {integrity: sha512-0qSLhU9pc1OZ3Qwhn9QPS0O+JN6a8Xr0SHbL2WYyTnwC0exKI3fwNrSqI6z8jAqni04wD9snU8eX3oJYP/3A8g==}
     engines: {node: '>= 18'}
     peerDependencies:
-      '@octokit/core': '>=5'
+      '@octokit/core': '>=6'
     dependencies:
       '@octokit/core': 6.0.1
     dev: false
@@ -1262,8 +1262,8 @@ packages:
     dev: false
     optional: true
 
-  /bare-fs@2.2.1:
-    resolution: {integrity: sha512-+CjmZANQDFZWy4PGbVdmALIwmt33aJg8qTkVjClU6X4WmZkTPBDxRHiBn7fpqEWEfF3AC2io++erpViAIQbSjg==}
+  /bare-fs@2.2.2:
+    resolution: {integrity: sha512-X9IqgvyB0/VA5OZJyb5ZstoN62AzD7YxVGog13kkfYWYqJYcK0kcqLZ6TrmH5qr4/8//ejVcX4x/a0UvaogXmA==}
     requiresBuild: true
     dependencies:
       bare-events: 2.2.1
@@ -3643,7 +3643,7 @@ packages:
       pump: 3.0.0
       tar-stream: 3.1.7
     optionalDependencies:
-      bare-fs: 2.2.1
+      bare-fs: 2.2.2
       bare-path: 2.1.0
     dev: false
     optional: true
