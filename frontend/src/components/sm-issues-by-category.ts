@@ -10,6 +10,8 @@ const validCategories = [
     'triage',
     'urgent',
     'soon',
+    'agenda',
+    'needsEdits',
     'other',
 ] as const;
 
@@ -65,6 +67,8 @@ export class IssuesByCategory extends LitElement {
             case "other": return '';
             case "soon": return 'soon-priority issues outside their SLO';
             case "triage": return 'untriaged issues outside their SLO';
+            case "needsEdits": return 'issues with out-of-SLO pending edits';
+            case "agenda": return 'issues that have been on the agenda too long';
             case "urgent": return 'urgent issues outside their SLO';
         }
     }
@@ -75,6 +79,8 @@ export class IssuesByCategory extends LitElement {
             case "other": return 'other issues';
             case "soon": return 'soon-priority issues';
             case "triage": return 'untriaged issues';
+            case "needsEdits": return 'issues with pending edits';
+            case "agenda": return 'issues on the agenda';
             case "urgent": return 'urgent issues';
         }
     }
@@ -93,7 +99,13 @@ export class IssuesByCategory extends LitElement {
                         <span class="all">${issues.length} ${this.allIssuesMsg()}</span>
                     </h2></summary>
                     <ul>
-                        ${issues.map(issue => html`<li><sm-issue href="${issue.url}" repo="${issue.repo}" sloType="${issue.whichSlo}" .sloTimeUsed="${issue.sloTimeUsed}">${issue.title}</sm-issue></li>`)}
+                        ${issues.map(issue => html`<li><sm-issue
+                            href="${issue.url}"
+                            repo="${issue.repo}"
+                            sloType="${this.category}"
+                            .sloTimeUsed="${issue.sloTimeUsed}"
+                            .onAgendaFor="${issue.onAgendaFor}"
+                            .neededEditsFor="${issue.neededEditsFor}">${issue.title}</sm-issue></li>`)}
                     </ul>
                 </details>`;
             }

@@ -4,7 +4,7 @@ import { SloType } from "@lib/repo-summaries";
 import { slo, sloMap } from "@lib/slo";
 import { LitElement, css, html, nothing, type ComplexAttributeConverter, type PropertyValues } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import type { ZodEnum } from "zod";
+import { z, type ZodEnum } from "zod";
 
 function enumPropertyConverter<Vs extends [string, ...string[]]>(values: ZodEnum<Vs>) {
     return {
@@ -41,11 +41,21 @@ export class Issue extends LitElement {
     @property({ type: String })
     repo: string | null = null;
 
-    @property({ converter: enumPropertyConverter(SloType) })
-    sloType: SloType | undefined = undefined;
+    @property({
+        converter: enumPropertyConverter(z.enum([
+            'triage', 'urgent', 'soon', 'none', 'needsEdits', 'agenda']))
+    })
+    sloType: SloType | 'needsEdits' | 'agenda' | undefined = undefined;
 
     @property({ converter: durationPropertyConverter, reflect: true })
     sloTimeUsed: Temporal.Duration | null = null;
+
+    @property({ converter: durationPropertyConverter, reflect: true })
+    onAgendaFor: Temporal.Duration | undefined = undefined;
+
+    @property({ converter: durationPropertyConverter, reflect: true })
+    neededEditsFor: Temporal.Duration | undefined = undefined;
+
 
     @property({ type: Boolean, reflect: true })
     withinSlo: boolean = true;
@@ -54,8 +64,18 @@ export class Issue extends LitElement {
         if (changedProperties.has('sloType') || changedProperties.has('sloTimeUsed')) {
             this.withinSlo = true;
             if (this.sloType && this.sloTimeUsed) {
-                const { withinSlo } = slo({ whichSlo: this.sloType, sloTimeUsed: this.sloTimeUsed });
+                let sloType = this.sloType;
+                let category = undefined;
+                if (sloType === 'agenda' || sloType === 'needsEdits') {
+                    category = sloType;
+                    sloType = 'none';
+                }
+                const { withinSlo, categories } = slo({ whichSlo: sloType, sloTimeUsed: this.sloTimeUsed, onAgendaFor: this.onAgendaFor, neededEditsFor: this.neededEditsFor });
+                if (category && category in categories) {
+                    this.withinSlo = categories[category]!.untilSlo.sign > 0;
+                } else {
                 this.withinSlo = withinSlo;
+                }
             }
         }
     }
