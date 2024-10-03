@@ -218,12 +218,7 @@ const prFragment = gql(`fragment prFragment on PullRequestConnection {
   }
 }`);
 
-const commentQuery = gql(`query ($ids: [ID!]!, $itemCount: Int!, $cursor: String) {
-  rateLimit {
-    cost
-    remaining
-  }
-  nodes(ids: $ids) {
+const commentQueryNodeFragment = gql(`fragment commentQueryNodeFragment on Node {
     __typename
     id
     ... on Issue {
@@ -259,15 +254,37 @@ const commentQuery = gql(`query ($ids: [ID!]!, $itemCount: Int!, $cursor: String
         }
       }
     }
-  }
 }
 fragment commentFields on Comment {
   createdAt
   author {
     login
   }
-}`);
-const CommentQueryResult = z.object({
+}`)
+
+const initialCommentQuery = gql(`query ($ids: [ID!]!, $itemCount: Int!, $cursor: String) {
+  rateLimit {
+    cost
+    remaining
+  }
+  nodes(ids: $ids) {
+    ...commentQueryNodeFragment
+  }
+}
+${commentQueryNodeFragment}
+`);
+const remainingCommentQuery = gql(`query ($id: ID!, $itemCount: Int!, $cursor: String) {
+  rateLimit {
+    cost
+    remaining
+  }
+  node(id: $id) {
+    ...commentQueryNodeFragment
+  }
+}
+${commentQueryNodeFragment}
+`);
+const InitialCommentQueryResult = z.object({
   rateLimit: z.object({
     cost: z.number(),
     remaining: z.number(),
@@ -277,6 +294,17 @@ const CommentQueryResult = z.object({
     id: z.string(),
     timelineItems: TimelineItems,
   })),
+});
+const RemainingCommentQueryResult = z.object({
+  rateLimit: z.object({
+    cost: z.number(),
+    remaining: z.number(),
+  }),
+  node: z.object({
+    __typename: z.string(),
+    id: z.string(),
+    timelineItems: TimelineItems,
+  }),
 });
 
 export async function fetchAllComments(needAllComments: IssueOrPr[], needEarlyComments: IssueOrPr[]) {
@@ -292,7 +320,7 @@ export async function fetchAllComments(needAllComments: IssueOrPr[], needEarlyCo
   const numEarlyComments = needEarlyComments.length;
   while (needEarlyComments.length > 0) {
     const initial = needEarlyComments.splice(0, fetchAtOnce);
-    const result = CommentQueryResult.parse(await octokit.graphql(commentQuery, {
+    const result = InitialCommentQueryResult.parse(await octokit.graphql(initialCommentQuery, {
       ids: initial.map(issue => issue.id),
       itemCount: 5,
     }));
@@ -312,12 +340,12 @@ export async function fetchAllComments(needAllComments: IssueOrPr[], needEarlyCo
       continue;
     }
     console.log(`Paging through comments on issue ${issue.number}; id ${issue.id}.`);
-    const result = CommentQueryResult.parse(await octokit.graphql.paginate(commentQuery, {
-      ids: [issue.id],
+    const result = RemainingCommentQueryResult.parse(await octokit.graphql.paginate(remainingCommentQuery, {
+      id: issue.id,
       itemCount: 100,
       cursor: issue.timelineItems.commentPageInfo.endCursor,
     }));
-    issue.timelineItems.nodes.push(...result.nodes[0].timelineItems.nodes);
+    issue.timelineItems.nodes.push(...result.node.timelineItems.nodes);
     for (const timelineItem of issue.timelineItems.nodes) {
       if (timelineItem.__typename === 'PullRequestReviewThread') {
         timelineItem.createdAt = timelineItem.comments.nodes[0]?.createdAt;
