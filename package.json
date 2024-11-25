@@ -26,10 +26,10 @@
     "@octokit/plugin-throttling": "^9.3.2",
     "@octokit/request-error": "^6.1.5",
     "@webcomponents/template-shadowroot": "^0.2.1",
-    "astro": "^4.16.13",
+    "astro": "^4.16.14",
     "colorjs.io": "^0.5.2",
     "commander": "^12.1.0",
-    "csv-stringify": "^6.5.1",
+    "csv-stringify": "^6.5.2",
     "lit": "^3.2.1",
     "node-fetch": "^3.3.2",
     "simple-statistics": "^7.8.7",
@@ -38,10 +38,10 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.4",
     "@tsconfig/node20": "^20.1.4",
-    "@types/mocha": "^10.0.9",
-    "@types/node": "^22.9.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.9.3",
     "mocha": "^10.8.2",
-    "typescript": "^5.6.3"
+    "typescript": "^5.7.2"
   },
   "packageManager": "pnpm@9.12.0+sha512.4abf725084d7bcbafbd728bfc7bee61f2f791f977fd87542b3579dcb23504d170d46337945e4c66485cd12d588a0c0e570ed9c477e7ccdd8507cf05f3f92eaca"
 }
