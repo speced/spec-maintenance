@@ -28,7 +28,7 @@ const sloLabels = {
  * It's also possible to define a custom isTriaged predicate for each repository.
  */
 export function hasLabels(repo: Pick<Repository, 'nameWithOwner' | 'labels'>): boolean {
-  return hasTriagePredicate(repo.nameWithOwner) || repo.labels.nodes.some(labelNode => labelNode.name === PRIORITY_EVENTUALLY);
+  return hasTriagePredicate(repo.nameWithOwner) || repo.labels.nodes.some(labelNode => labelNode.name.toLowerCase() === PRIORITY_EVENTUALLY);
 }
 
 export function whichSlo(repoNameWithOwner: string, issue: Pick<IssueOrPr, 'labels' | 'isDraft'>): SloType {
